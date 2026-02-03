@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DD de Marseille | David Tall — Hayal, Rappeur, Codeur</title>
+    <meta name="description" content="DD de Marseille - Hayal le jour, rappeur la nuit, codeur H24. Fan de l'OM (on sait qu'on gagnera jamais). 🎤🪖💻">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="DD de Marseille | David Tall">
+    <meta property="og:description" content="Hayal le jour, rappeur la nuit, codeur H24. Fan de l'OM (on sait qu'on gagnera jamais).">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200&h=630&fit=crop&q=80">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --dark: #141414;
+            --military: #4a5d23;
+            --military-light: #6b7f3a;
+            --om-blue: #2faee0;
+            --om-white: #ffffff;
+            --gold: #d4af37;
+            --text: #e0e0e0;
+            --text-muted: #888888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--black);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Grain Overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.08"/></svg>');
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 60px 30px;
+            position: relative;
+            background: linear-gradient(135deg, var(--black) 0%, var(--dark) 50%, rgba(74, 93, 35, 0.3) 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(47, 174, 224, 0.1) 100%);
+            clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content {
+            padding-right: 40px;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--military);
+            color: var(--om-white);
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 6rem;
+            line-height: 0.95;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        .hero h1 .dd {
+            color: var(--om-blue);
+            display: block;
+        }
+
+        .hero h1 .marseille {
+            color: var(--om-white);
+            font-size: 4rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hero-subtitle strong {
+            color: var(--om-blue);
+        }
+
+        .hero-roles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .role {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .role:hover {
+            border-color: var(--om-blue);
+            transform: translateY(-3px);
+        }
+
+        .role i {
+            font-size: 1.2rem;
+        }
+
+        .role.military i { color: var(--military-light); }
+        .role.rap i { color: var(--gold); }
+        .role.code i { color: var(--om-blue); }
+        .role.om i { color: var(--om-blue); }
+
+        .hero-cta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 35px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-youtube {
+            background: #ff0000;
+            color: var(--om-white);
+        }
+
+        .btn-youtube:hover {
+            background: #cc0000;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--om-blue);
+            color: var(--om-blue);
+        }
+
+        .btn-outline:hover {
+            background: var(--om-blue);
+            color: var(--black);
+        }
+
+        .hero-image {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hero-image-frame {
+            position: relative;
+            width: 350px;
+            height: 450px;
+            background: linear-gradient(135deg, var(--military) 0%, var(--dark) 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 1;
+        }
+
+        .hero-image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-image-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 2;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--om-white);
+            letter-spacing: 3px;
+        }
+
+        .hero-badge {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background: var(--om-blue);
+            color: var(--black);
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 30px rgba(47, 174, 224, 0.4);
+        }
+
+        /* Quote Section */
+        .quote {
+            padding: 80px 30px;
+            background: var(--military);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quote::before {
+            content: '"';
+            position: absolute;
+            top: -50px;
+            left: 50px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20rem;
+            color: rgba(0, 0, 0, 0.2);
+        }
+
+        .quote-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            color: var(--om-white);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.3;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 2px;
+        }
+
+        .quote-text span {
+            color: var(--om-blue);
+        }
+
+        /* About Section */
+        .about {
+            padding: 100px 30px;
+            background: var(--dark);
+        }
+
+        .about-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 60px;
+            letter-spacing: 3px;
+        }
+
+        .section-title span {
+            color: var(--om-blue);
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .about-card {
+            background: var(--black);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px 30px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--om-blue);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+
+        .about-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .about-card:hover {
+            border-color: var(--om-blue);
+            transform: translateX(10px);
+        }
+
+        .about-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .about-card h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .about-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* OM Section */
+        .om-section {
+            padding: 80px 30px;
+            background: linear-gradient(135deg, var(--om-blue) 0%, #1a8ab8 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .om-section::before {
+            content: '⚽';
+            position: absolute;
+            font-size: 15rem;
+            opacity: 0.1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .om-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            color: var(--om-white);
+            position: relative;
+            z-index: 1;
+            letter-spacing: 3px;
+        }
+
+        .om-subtext {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* YouTube Section */
+        .youtube {
+            padding: 100px 30px;
+            background: var(--black);
+            text-align: center;
+        }
+
+        .youtube-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .youtube-icon {
+            font-size: 5rem;
+            color: #ff0000;
+            margin-bottom: 30px;
+        }
+
+        .youtube h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        .youtube p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .youtube .btn-youtube {
+            font-size: 1.2rem;
+            padding: 22px 50px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            padding: 50px 30px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+        }
+
+        .footer-name span {
+            color: var(--om-blue);
+        }
+
+        .footer-roles {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 25px;
+        }
+
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .footer-social a {
+            width: 50px;
+            height: 50px;
+            background: var(--black);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            font-size: 1.3rem;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: var(--om-blue);
+            color: var(--black);
+            border-color: var(--om-blue);
+            transform: translateY(-5px);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer-copy .israel {
+            color: var(--om-blue);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-content {
+                padding-right: 0;
+            }
+
+            .hero-roles {
+                justify-content: center;
+            }
+
+            .hero-cta {
+                justify-content: center;
+            }
+
+            .hero-image {
+                display: none;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 4rem;
+            }
+
+            .hero h1 .marseille {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 3rem;
+            }
+
+            .quote-text {
+                font-size: 2rem;
+            }
+
+            .om-text {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .hero h1 .marseille {
+                font-size: 2rem;
+            }
+
+            .role {
+                font-size: 0.85rem;
+                padding: 10px 15px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-tag">
+                    <i class="fas fa-microphone-alt"></i>
+                    Rappeur • Hayal • Codeur
+                </div>
+                <h1>
+                    <span class="dd">DD</span>
+                    <span class="marseille">de Marseille</span>
+                </h1>
+                <p class="hero-subtitle">
+                    <strong>David Tall</strong> — 19 ans. Hayal le jour, rappeur la nuit, codeur H24. 
+                    Je rappe tout ce qui se passe dans ma journée. Déconneur professionnel. 🎤
+                </p>
+                <div class="hero-roles">
+                    <div class="role military">
+                        <i class="fas fa-shield-alt"></i>
+                        Hayal 🪖
+                    </div>
+                    <div class="role rap">
+                        <i class="fas fa-microphone-alt"></i>
+                        Rappeur
+                    </div>
+                    <div class="role code">
+                        <i class="fas fa-code"></i>
+                        Codeur
+                    </div>
+                    <div class="role om">
+                        <i class="fas fa-futbol"></i>
+                        Team OM
+                    </div>
+                </div>
+                <div class="hero-cta">
+                    <a href="https://youtube.com/@davidtall8308" target="_blank" class="btn btn-youtube">
+                        <i class="fab fa-youtube"></i> Ma chaîne YouTube
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-image-frame">
+                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80" alt="DD de Marseille">
+                    <span class="hero-image-text">DD 🎤</span>
+                </div>
+                <div class="hero-badge">🪖</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quote Section -->
+    <section class="quote">
+        <p class="quote-text">
+            "Je rappe ma vie, <span>chaque jour est un freestyle.</span>"
+        </p>
+    </section>
+
+    <!-- About Section -->
+    <section class="about">
+        <div class="about-container">
+            <h2 class="section-title">C'est <span>qui</span> DD ?</h2>
+            <div class="about-grid">
+                <div class="about-card">
+                    <div class="about-card-icon">🪖</div>
+                    <h3>Hayal</h3>
+                    <p>Soldat de Tsahal. Je protège mon pays le jour, et je pose des sons la nuit. La discipline militaire, ça aide pour le flow.</p>
+                </div>
+                <div class="about-card">
+                    <div class="about-card-icon">🎤</div>
+                    <h3>Rappeur</h3>
+                    <p>DD de Marseille, c'est mon blaze. Je rappe tout ce qui m'arrive dans la journée. La vraie vie, pas de filtre, pas de fake.</p>
+                </div>
+                <div class="about-card">
+                    <div class="about-card-icon">💻</div>
+                    <h3>Codeur</h3>
+                    <p>Quand je rappe pas, je code. Deux langages différents, même passion : créer quelque chose à partir de rien.</p>
+                </div>
+                <div class="about-card">
+                    <div class="about-card-icon">🤪</div>
+                    <h3>Déconneur</h3>
+                    <p>La vie est trop courte pour être sérieux H24. Je déconne, je rigole, je profite. C'est ça l'esprit Marseille.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OM Section -->
+    <section class="om-section">
+        <p class="om-text">⚽ ALLEZ L'OM !</p>
+        <p class="om-subtext">(On sait qu'on gagnera jamais, mais on supporte quand même. C'est ça l'amour vrai. 💙)</p>
+    </section>
+
+    <!-- YouTube Section -->
+    <section class="youtube">
+        <div class="youtube-container">
+            <div class="youtube-icon">
+                <i class="fab fa-youtube"></i>
+            </div>
+            <h2>Écoute mes sons</h2>
+            <p>
+                Retrouve tous mes freestyles, mes sons et mes délires sur ma chaîne YouTube. 
+                Abonne-toi si tu veux suivre l'aventure DD de Marseille ! 🎬
+            </p>
+            <a href="https://youtube.com/@davidtall8308" target="_blank" class="btn btn-youtube">
+                <i class="fab fa-youtube"></i> S'abonner à la chaîne
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-name">David <span>Tall</span></div>
+        <p class="footer-roles">DD de Marseille • Hayal • Rappeur • Codeur</p>
+        <div class="footer-social">
+            <a href="https://youtube.com/@davidtall8308" target="_blank" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+        </div>
+        <p class="footer-copy">© 2026 David Tall — 🇫🇷 Marseille dans le cœur, <span class="israel">🇮🇱</span> Israël dans l'âme</p>
+    </footer>
+</body>
+</html>
