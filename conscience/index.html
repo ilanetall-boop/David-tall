@@ -234,6 +234,14 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
 .mini-tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:999px;font-weight:700;font-size:.8rem}
 .mini-tabs button.on{background:var(--card-2);color:var(--text);border-color:var(--accent)}
 
+/* history bars */
+.hist{display:flex;align-items:flex-end;gap:8px;height:130px}
+.hist .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hist .bar{width:100%;max-width:30px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#33c97f,#5b8cff);min-height:4px;transition:height .3s}
+.hist .bar.low{background:linear-gradient(180deg,#ffb020,#ff5d6c)}
+.hist .pc{font-size:.72rem;font-weight:800}
+.hist .dy{font-size:.66rem;color:var(--muted)}
+
 /* chat / IA */
 #v-chat.active{display:flex;flex-direction:column;padding:0}
 .chat-status{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
@@ -389,6 +397,10 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
     <!-- PROFILE -->
     <section id="v-profile" class="view">
       <div class="section-h"><h2>Profil</h2></div>
+      <div class="card" id="history-card">
+        <div class="section-h" style="margin:0 0 12px"><h2 style="font-size:1.05rem">📅 Tes 7 derniers jours</h2></div>
+        <div class="hist" id="hist"></div>
+      </div>
       <div class="card" id="profile-card"></div>
       <button class="btn secondary" id="btn-manage-eng" style="margin-bottom:12px">🎯 Gérer mes engagements</button>
       <button class="btn secondary" id="btn-edit-goal" style="margin-bottom:12px">⚖️ Changer d'objectif poids</button>
@@ -490,14 +502,23 @@ function isSuccess(e){
   if(e.type==='number') return e.dir==='max' ? (+l.value<=e.target) : (+l.value>=e.target);
   return !!l.done;
 }
-function consciencePct(){
-  // mélange engagements + repas/pesée du jour
+function dayScore(k){
+  // score d'un jour donné : engagements tenus + au moins 1 repas prouvé
+  const logs=S.logs[k]||{};
   const parts=[];
-  S.engagements.forEach(e=>parts.push(isSuccess(e)?1:0));
-  parts.push((S.meals[todayKey()]||[]).length>0 ? 1 : 0); // au moins 1 repas prouvé
-  if(!parts.length) return null;
+  S.engagements.forEach(e=>{
+    const l=logs[e.id]; let ok=false;
+    if(l){
+      if(e.proof && !l.photo) ok=false;
+      else if(e.type==='number') ok = e.dir==='max' ? (+l.value<=e.target) : (+l.value>=e.target);
+      else ok=!!l.done;
+    }
+    parts.push(ok?1:0);
+  });
+  parts.push((S.meals[k]||[]).length>0 ? 1 : 0);
   return Math.round(100*parts.reduce((a,b)=>a+b,0)/parts.length);
 }
+function consciencePct(){ return dayScore(todayKey()); }
 
 /* ---------- Health math ---------- */
 function bmr(p){ // Mifflin-St Jeor
@@ -722,10 +743,45 @@ function boot(){
   $('#hi-goal').textContent = goalTxt[S.profile.goal];
   updateVoiceBtn();
   setupMic();
+  morningBriefing();
   maybeConfront();
   renderAll();
 }
-function renderAll(){ renderScore(); renderMissions(); renderToday(); renderMeals(); renderWeight(); renderProfile(); renderStreak(); }
+// 1ère ouverture de la journée : la conscience fait le point du matin
+function morningBriefing(){
+  const k=todayKey();
+  if((S.feed[k]||[]).length) return; // déjà parlé aujourd'hui
+  const h=new Date().getHours();
+  const hello = h<12?'Bonjour':h<18?'Salut':'Bonsoir';
+  pushFeed('info', `${hello} ${S.profile.name} 👋 Nouvelle journée, on repart à zéro. ${conscienceDailyPlan()}`);
+  if(S.engagements.length){
+    pushFeed('info', `Aujourd'hui je surveille : ${S.engagements.map(e=>e.emoji+' '+e.title.toLowerCase()).join(', ')}. Prouve-moi chaque truc. 🔒`);
+  }
+  // rappelle hier si le score était faible
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const yk=todayKey(y);
+  if((S.feed[yk]||S.logs[yk]||S.meals[yk]) && dayScore(yk)<50){
+    pushFeed('warn', `Hier t'étais à ${dayScore(yk)}% seulement. Aujourd'hui on se rattrape, pas d'excuse. 💪`);
+  }
+  save();
+}
+function renderAll(){ renderScore(); renderMissions(); renderToday(); renderMeals(); renderWeight(); renderProfile(); renderHistory(); renderStreak(); }
+
+function renderHistory(){
+  const el=$('#hist'); if(!el) return;
+  const days=['dim','lun','mar','mer','jeu','ven','sam'];
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const k=todayKey(d), sc=dayScore(k);
+    html+=`<div class="col">
+      <span class="pc">${sc}%</span>
+      <div class="bar ${sc<50?'low':''}" style="height:${Math.max(4,sc)}%"></div>
+      <span class="dy">${i===0?'auj.':days[d.getDay()]}</span>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
 
 function renderScore(){
   const pct=consciencePct();
