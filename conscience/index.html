@@ -200,6 +200,32 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
 .pill-tabs{display:flex;gap:8px;margin-bottom:14px}
 .pill-tabs button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--muted);padding:10px;border-radius:12px;font-weight:700;font-size:.85rem}
 .pill-tabs button.on{background:var(--card-2);color:var(--text);border-color:var(--accent)}
+
+/* voice toggle */
+.voice-btn{background:var(--card);border:1px solid var(--line);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;color:var(--text);flex:0 0 auto}
+.voice-btn.off{opacity:.4}
+
+/* chat / IA */
+#v-chat.active{display:flex;flex-direction:column;padding:0}
+.chat-status{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
+.chat-status h3{font-size:1rem;margin-bottom:6px}
+.chat-scroll{flex:1;overflow-y:auto;padding:16px 14px 180px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.cmsg{max-width:84%;padding:11px 14px;border-radius:16px;line-height:1.45;font-size:.95rem;white-space:pre-wrap;word-wrap:break-word}
+.cmsg.ai{align-self:flex-start;background:var(--card-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.cmsg.me{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-bottom-right-radius:4px;color:#fff}
+.chat-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:flex;gap:8px;align-items:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(11,17,32,.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:35}
+.chat-bar input{flex:1;border-radius:999px;padding:13px 16px}
+.icon-btn{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:1.15rem;background:var(--card-2);border:1px solid var(--line);color:var(--text)}
+.icon-btn.send{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#fff}
+.icon-btn.rec{background:var(--bad);color:#fff;animation:pulse 1s infinite}
+.icon-btn[disabled]{opacity:.4;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.dl-bar{height:8px;background:var(--card);border-radius:999px;overflow:hidden;margin-top:10px}
+.dl-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .3s}
+.typing{display:inline-flex;gap:5px;padding:2px 0}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bl 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,60%,100%{opacity:.3}30%{opacity:1}}
 </style>
 </head>
 <body>
@@ -237,6 +263,7 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
     <header class="topbar">
       <span class="eye">👁️</span>
       <div class="who"><b id="hi-name">Salut</b><small id="hi-goal"></small></div>
+      <button class="voice-btn" id="voice-btn" title="Voix">🔊</button>
       <div class="streak">🔥 <span id="streak">0</span></div>
     </header>
 
@@ -316,9 +343,21 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
       <p class="disclaimer">Tes données restent sur ton téléphone (rien n'est envoyé sur internet). Les photos aussi.</p>
     </section>
 
+    <!-- CHAT / IA -->
+    <section id="v-chat" class="view">
+      <div class="chat-status" id="chat-status"></div>
+      <div class="chat-scroll" id="chat-scroll"></div>
+      <div class="chat-bar">
+        <button class="icon-btn" id="mic-btn" title="Parler">🎤</button>
+        <input id="chat-input" placeholder="Parle à ta conscience..." autocomplete="off" disabled>
+        <button class="icon-btn send" id="send-btn" disabled>➤</button>
+      </div>
+    </section>
+
     <!-- TABBAR -->
     <nav class="tabbar">
-      <button data-tab="today" class="on"><span class="ic">🏠</span>Aujourd'hui</button>
+      <button data-tab="today" class="on"><span class="ic">🏠</span>Auj.</button>
+      <button data-tab="chat"><span class="ic">💬</span>Parler</button>
       <button data-tab="meals"><span class="ic">🍽️</span>Repas</button>
       <button data-tab="weight"><span class="ic">⚖️</span>Poids</button>
       <button data-tab="profile"><span class="ic">👤</span>Profil</button>
@@ -355,6 +394,7 @@ function freshState(){
     meals:{},                // {dateKey:[{id,time,photo,kcal,note}]}
     weighIns:[],             // [{date,time,weight,photo}]
     feed:{},                 // {dateKey:[{type,text,time}]}
+    chat:[],                 // [{role:'me'|'ai',text}]
     lastConfront:null,
     createdAt:Date.now()
   };
@@ -497,7 +537,7 @@ function finishOnboarding(){
   S.profile = {...OB.data};
   // pesée initiale (déclarée, sans preuve) — marquée comme à confirmer
   S.weighIns = [{date:todayKey(), time:nowTime(), weight:OB.data.weight, photo:null, declared:true}];
-  pushFeed('good', `Enchanté ${OB.data.name} 👋 J'ai noté ${OB.data.weight}kg. Mais ça, c'est ce que TU dis. La prochaine pesée, tu me la prouves en photo. 😏`);
+  pushFeed('good', `Enchanté ${OB.data.name} 👋 J'ai noté ${OB.data.weight}kg. Mais ça, c'est ce que TU dis. La prochaine pesée, tu me la prouves en photo. 😏`, true);
   pushFeed('info', conscienceDailyPlan());
   save();
   boot();
@@ -506,9 +546,10 @@ function finishOnboarding(){
 /* =========================================================
    CONSCIENCE LOGIC (messages)
    ========================================================= */
-function pushFeed(type,text){
+function pushFeed(type,text,say=false){
   const k=todayKey();
   (S.feed[k] = S.feed[k]||[]).push({type,text,time:nowTime()});
+  if(say && window.Voice) Voice.speak(text);
 }
 function conscienceDailyPlan(){
   const p=S.profile, kcal=targetKcal(p), m=macros(kcal,p.goal);
@@ -534,7 +575,7 @@ function maybeConfront(){
     type='bad';
   }
   if(msg && S.lastConfront!==k+msg.slice(0,12)){
-    pushFeed(type,msg);
+    pushFeed(type,msg,true);
     S.lastConfront=k+msg.slice(0,12);
     save();
   }
@@ -549,6 +590,8 @@ function boot(){
   $('#hi-name').textContent = `Salut ${S.profile.name} 👋`;
   const goalTxt={maigrir:'Objectif : maigrir 📉',stabiliser:'Objectif : se stabiliser ⚖️',prendre:'Objectif : prise de masse 📈'};
   $('#hi-goal').textContent = goalTxt[S.profile.goal];
+  updateVoiceBtn();
+  setupMic();
   maybeConfront();
   renderAll();
 }
@@ -659,6 +702,7 @@ $$('.tabbar button').forEach(b=>b.onclick=()=>{
   b.classList.add('on');
   $$('.view').forEach(v=>v.classList.remove('active'));
   $('#v-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='chat') openChatView();
 });
 
 /* =========================================================
@@ -727,7 +771,7 @@ function reactToMeal(kcal){
   } else {
     type='info'; msg=`Bien reçu, photo validée. Il te reste ${Math.max(0,goal-total)} kcal pour la journée. 📸`;
   }
-  pushFeed(type,msg);
+  pushFeed(type,msg,true);
 }
 
 /* ---- Pesée ---- */
@@ -751,11 +795,11 @@ function openWeigh(){
     const prev=S.weighIns[S.weighIns.length-1];
     S.weighIns.push({date:todayKey(),time:nowTime(),weight:v,photo:getPhoto()});
     reactToWeigh(v,prev);
-    save(); closeModal(); renderAll(); $$('.tabbar button')[2].click(); toast('Pesée prouvée ✅');
+    save(); closeModal(); renderAll(); $$('.tabbar button')[3].click(); toast('Pesée prouvée ✅');
   };
 }
 function reactToWeigh(v,prev){
-  if(!prev){ pushFeed('good',`Première pesée prouvée : ${v}kg. Maintenant j'ai une vraie base. On y va. 💪`); return; }
+  if(!prev){ pushFeed('good',`Première pesée prouvée : ${v}kg. Maintenant j'ai une vraie base. On y va. 💪`,true); return; }
   const d=+(v-prev.weight).toFixed(1), g=S.profile.goal;
   let type='info',msg;
   if(g==='maigrir'){
@@ -769,7 +813,7 @@ function reactToWeigh(v,prev){
     type=Math.abs(d)<=0.7?'good':'warn';
     msg=`${v}kg (${d>0?'+':''}${d}kg). ${Math.abs(d)<=0.7?'Stable, parfait, c\'est l\'objectif. 👌':'Ça bouge un peu, on garde un œil.'}`;
   }
-  pushFeed(type,msg);
+  pushFeed(type,msg,true);
 }
 
 /* ---- Buttons ---- */
@@ -801,6 +845,222 @@ $('#btn-reset').onclick=()=>{
 };
 
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2200); }
+
+/* =========================================================
+   VOIX — synthèse vocale 100% locale (speechSynthesis)
+   ========================================================= */
+const Voice = {
+  on: JSON.parse(localStorage.getItem('conscience.voice') ?? 'true'),
+  voice: null,
+  pick(){
+    if(!('speechSynthesis' in window)) return;
+    const vs = speechSynthesis.getVoices();
+    this.voice = vs.find(v=>/fr[-_]?FR/i.test(v.lang))
+              || vs.find(v=>/^fr/i.test(v.lang))
+              || null;
+  },
+  speak(t){
+    if(!this.on || !('speechSynthesis' in window) || !t) return;
+    try{
+      const clean = String(t).replace(/<[^>]+>/g,'').replace(/[*_#`]/g,'');
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(clean);
+      if(this.voice) u.voice = this.voice;
+      u.lang='fr-FR'; u.rate=1.04; u.pitch=1;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  },
+  toggle(){
+    this.on=!this.on;
+    localStorage.setItem('conscience.voice', JSON.stringify(this.on));
+    if(!this.on && 'speechSynthesis' in window) speechSynthesis.cancel();
+    updateVoiceBtn();
+  }
+};
+window.Voice = Voice;
+if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>Voice.pick(); Voice.pick(); }
+function updateVoiceBtn(){
+  const b=$('#voice-btn'); if(!b) return;
+  b.classList.toggle('off', !Voice.on);
+  b.textContent = Voice.on ? '🔊' : '🔇';
+}
+const _vb=$('#voice-btn'); if(_vb) _vb.onclick=()=>Voice.toggle();
+
+/* =========================================================
+   IA — vrai modèle de langage 100% local (WebLLM / WebGPU)
+   Le modèle se télécharge 1 fois puis tourne sur l'appareil.
+   Aucune donnée ni conversation n'est envoyée sur internet.
+   ========================================================= */
+const AI = {
+  engine:null, ready:false, loading:false,
+  mode:null, // 'llm' | 'local'
+  model: localStorage.getItem('conscience.model') || 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+  history:[],
+  async init(onProgress){
+    if(this.ready) return true;
+    if(!('gpu' in navigator)) throw new Error('NO_WEBGPU');
+    this.loading=true;
+    const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+    this.engine = await webllm.CreateMLCEngine(this.model, {
+      initProgressCallback: (r)=> onProgress && onProgress(r)
+    });
+    this.ready=true; this.loading=false; this.mode='llm';
+    return true;
+  },
+  system(){
+    const p=S.profile, kcal=targetKcal(p), eaten=eatenToday();
+    const w=S.weighIns, last=w[w.length-1], first=w[0];
+    const ms=(S.meals[todayKey()]||[]);
+    const goalTxt={maigrir:'perdre du poids en douceur',stabiliser:'se stabiliser et manger sain',prendre:'prendre du muscle proprement'}[p.goal];
+    return `Tu es "Conscience", la conscience personnelle de ${p.name}. Tu parles en français, au tutoiement, ton direct et un peu cash mais VRAIMENT bienveillant, comme un pote qui veut son bien. Phrases courtes : tu seras lu à voix haute. Pas de longues listes.
+Ta mission : aider ${p.name} à ${goalTxt}. Tu sais qu'il peut te mentir, donc tu réclames toujours des PREUVES en photo (pèse-personne, repas). Pas de preuve = tu confrontes gentiment ("t'as craqué ?").
+Données réelles (ne les invente jamais, utilise-les) :
+- Objectif : ${goalTxt}.
+- Cible du jour : ${kcal} kcal. Déjà mangé aujourd'hui : ${eaten} kcal sur ${ms.length} repas prouvés.
+- Poids actuel prouvé : ${last? last.weight+' kg':'inconnu'}. Poids de départ : ${first? first.weight+' kg':'?'}.
+- Série de jours actifs : ${($('#streak')||{}).textContent||'0'}.
+Jamais de conseil dangereux pour la santé. Reste motivant et concret. Réponds en 1 à 3 phrases.`;
+  },
+  async ask(text, onToken){
+    const messages=[{role:'system',content:this.system()}, ...this.history.slice(-6), {role:'user',content:text}];
+    let full='';
+    const stream = await this.engine.chat.completions.create({messages, temperature:0.8, max_tokens:200, stream:true});
+    for await(const chunk of stream){
+      const d = chunk.choices?.[0]?.delta?.content || '';
+      if(d){ full+=d; onToken && onToken(full); }
+    }
+    this.history.push({role:'user',content:text},{role:'assistant',content:full});
+    if(this.history.length>12) this.history=this.history.slice(-12);
+    return full.trim();
+  }
+};
+
+/* Repli "cerveau local" si WebGPU absent — basé sur tes vraies données */
+function localBrain(text){
+  const t=text.toLowerCase();
+  const p=S.profile, kcal=targetKcal(p), eaten=eatenToday(), left=Math.max(0,kcal-eaten);
+  const last=S.weighIns[S.weighIns.length-1];
+  const goalName={maigrir:'maigrir',stabiliser:'te stabiliser',prendre:'prendre du muscle'}[p.goal];
+  if(/(salut|bonjour|coucou|hello|yo|cc|ça va|cava)/.test(t)) return `Yo ${p.name} 👋 Prêt à être carré aujourd'hui ? T'as mangé ${eaten} kcal pour l'instant.`;
+  if(/(faim|mang|repas|bouff|diner|dîner|déjeun|petit.?déj)/.test(t)) return `Il te reste ${left} kcal aujourd'hui. Prends ton prochain repas en photo, je valide. 📸`;
+  if(/(poids|pèse|pese|kilo|maigr|gross|grossi)/.test(t)) return `Dernier poids prouvé : ${last? last.weight+' kg':'aucun'}. Va te peser et envoie la photo du pèse-personne, je vérifie. 👀`;
+  if(/(craqu|burger|pizza|gras|sucre|fast.?food|gâteau|chocolat|frite)/.test(t)) return `T'as craqué ? Si c'est pas tous les jours, pas de drame. Montre-moi la photo et demain on rééquilibre.`;
+  if(/(objectif|but|goal|veux)/.test(t)) return `Ton objectif : ${goalName}. On lâche rien, et chaque preuve compte. 💪`;
+  if(/(merci|thanks|thx)/.test(t)) return `De rien. Mais c'est toi qui fais le taf, moi je te surveille. 😏`;
+  if(/(motiv|courage|dur|fatigu|envie|abandon)/.test(t)) return `Je sais que c'est dur. Mais regarde ta série et ton objectif. Un repas prouvé à la fois, ${p.name}. 🔥`;
+  return `Je t'écoute. Mais le plus important reste tes preuves : photos repas + pesée. Le reste c'est du blabla. 📸`;
+}
+
+/* =========================================================
+   CHAT (onglet "Parler")
+   ========================================================= */
+let chatRendered=false, recog=null;
+
+function openChatView(){
+  if(!chatRendered){
+    chatRendered=true;
+    (S.chat||[]).forEach(m=> appendBubble(m.role, m.text, false));
+    renderChatStatus();
+  }
+  scrollChat();
+}
+function renderChatStatus(){
+  const status=$('#chat-status');
+  if(AI.ready){ status.innerHTML=`<small class="sub">🧠 IA locale active — tourne sur ton appareil, hors-ligne.</small>`; setChatEnabled(true); return; }
+  if(AI.mode==='local'){ status.innerHTML=`<small class="sub">⚙️ Mode local (sans WebGPU) — 100% hors-ligne.</small>`; setChatEnabled(true); return; }
+  status.innerHTML=`
+    <h3>🧠 Active ta propre IA</h3>
+    <p class="sub" style="margin:6px 0 10px">Elle tourne <b>entièrement sur ton appareil</b>. 1er lancement = téléchargement du modèle, ensuite ça marche même hors-ligne. Rien n'est envoyé sur internet.</p>
+    <label class="field" style="margin-bottom:12px">
+      <span>Modèle (plus c'est gros, plus c'est malin mais lourd)</span>
+      <select id="ai-model">
+        <option value="Llama-3.2-1B-Instruct-q4f32_1-MLC">Léger — Llama 3.2 1B (~0,9 Go)</option>
+        <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Équilibré — Qwen2.5 1.5B (~1,1 Go)</option>
+        <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Costaud — Llama 3.2 3B (~2,2 Go)</option>
+      </select>
+    </label>
+    <button class="btn" id="ai-go">Activer l'IA</button>
+    <div id="dl-wrap" class="hidden"><div class="dl-bar"><i id="dl-fill"></i></div><small class="sub" id="dl-txt"></small></div>`;
+  $('#ai-model').value = AI.model;
+  $('#ai-go').onclick = activateAI;
+  setChatEnabled(false);
+}
+async function activateAI(){
+  AI.model = $('#ai-model').value;
+  localStorage.setItem('conscience.model', AI.model);
+  $('#ai-go').disabled=true; $('#ai-go').textContent='Chargement...'; $('#dl-wrap').classList.remove('hidden');
+  try{
+    await AI.init((r)=>{
+      const pct=Math.round((r.progress||0)*100);
+      $('#dl-fill').style.width=pct+'%';
+      $('#dl-txt').textContent=(r.text||'').slice(0,90)+(pct?` (${pct}%)`:'');
+    });
+    renderChatStatus();
+    const hi=`Ça y est ${S.profile.name}, je tourne sur ton appareil maintenant. Alors, on fait quoi de bien aujourd'hui ?`;
+    appendBubble('ai', hi); Voice.speak(hi);
+  }catch(e){
+    AI.mode='local';
+    renderChatStatus();
+    const msg = (e && e.message==='NO_WEBGPU')
+      ? `Ton appareil supporte pas le gros modèle (pas de WebGPU), mais je reste avec toi en mode local. Balance, je t'écoute.`
+      : `J'ai pas réussi à charger le modèle 😕. Je passe en mode local pour pas te lâcher. Réessaie plus tard si tu veux le gros cerveau.`;
+    appendBubble('ai', msg); Voice.speak(msg);
+  }
+}
+function setChatEnabled(on){
+  $('#chat-input').disabled=!on;
+  $('#send-btn').disabled=!on;
+  $('#mic-btn').disabled=!on;
+}
+function appendBubble(role, text, persist=true){
+  const d=document.createElement('div');
+  d.className='cmsg '+(role==='me'?'me':'ai');
+  d.textContent=text;
+  $('#chat-scroll').appendChild(d);
+  scrollChat();
+  if(persist && text){ (S.chat=S.chat||[]).push({role,text}); if(S.chat.length>60) S.chat=S.chat.slice(-60); save(); }
+  return d;
+}
+function scrollChat(){ const s=$('#chat-scroll'); if(s) s.scrollTop=s.scrollHeight; }
+
+async function sendChat(){
+  const inp=$('#chat-input'); const text=(inp.value||'').trim(); if(!text) return;
+  inp.value=''; appendBubble('me', text);
+  if(AI.ready){
+    setChatEnabled(false);
+    const node=appendBubble('ai','', false);
+    node.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
+    try{
+      const full=await AI.ask(text,(partial)=>{ node.textContent=partial; scrollChat(); });
+      node.textContent=full || '...';
+      (S.chat=S.chat||[]).push({role:'ai',text:node.textContent}); if(S.chat.length>60) S.chat=S.chat.slice(-60); save();
+      Voice.speak(node.textContent);
+    }catch(e){
+      node.textContent='Bug pendant que je réfléchissais 😵. Réessaie.';
+    }
+    setChatEnabled(true); inp.focus();
+  }else{
+    const r=localBrain(text);
+    appendBubble('ai', r); Voice.speak(r);
+  }
+}
+const _si=$('#send-btn'); if(_si) _si.onclick=sendChat;
+const _ci=$('#chat-input'); if(_ci) _ci.addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+
+/* Entrée micro (reconnaissance vocale du navigateur, optionnelle) */
+function setupMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn=$('#mic-btn');
+  if(!SR || !btn){ if(btn) btn.style.display='none'; return; }
+  if(recog) return;
+  recog=new SR(); recog.lang='fr-FR'; recog.interimResults=false; recog.maxAlternatives=1;
+  recog.onresult=e=>{ $('#chat-input').value=e.results[0][0].transcript; sendChat(); };
+  recog.onend=()=>btn.classList.remove('rec');
+  recog.onerror=()=>btn.classList.remove('rec');
+  btn.onclick=()=>{
+    try{ if('speechSynthesis' in window) speechSynthesis.cancel(); btn.classList.add('rec'); recog.start(); }catch(e){ btn.classList.remove('rec'); }
+  };
+}
 
 /* =========================================================
    START
