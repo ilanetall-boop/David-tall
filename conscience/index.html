@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Conscience — celle qui te lâche pas</title>
+<meta name="description" content="Ta conscience dans la poche. Elle te fixe tes objectifs, te suit au quotidien et te réclame des preuves. Impossible de lui mentir.">
+<meta name="theme-color" content="#0b1120">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1120;
+  --bg-soft:#121a2e;
+  --card:#16203a;
+  --card-2:#1c2745;
+  --line:rgba(255,255,255,.08);
+  --text:#e8edf7;
+  --muted:#8b97b3;
+  --accent:#5b8cff;
+  --accent-2:#7c5cff;
+  --good:#33c97f;
+  --warn:#ffb020;
+  --bad:#ff5d6c;
+  --shadow:0 18px 40px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,.18), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(91,140,255,.16), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  overscroll-behavior:none;
+}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* ---------- Generic ---------- */
+button{font-family:inherit;cursor:pointer;border:none}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-weight:700;font-size:1rem;padding:16px 22px;border-radius:14px;
+  width:100%;transition:transform .15s, box-shadow .15s, opacity .15s;
+  box-shadow:0 10px 24px rgba(91,140,255,.3);
+}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn.secondary{background:var(--card-2);box-shadow:none;border:1px solid var(--line)}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--muted);font-weight:600}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn.danger{background:linear-gradient(135deg,#ff5d6c,#ff8a5d);box-shadow:0 10px 24px rgba(255,93,108,.3)}
+.btn.good{background:linear-gradient(135deg,#33c97f,#28a8a0);box-shadow:0 10px 24px rgba(51,201,127,.25)}
+input,select{
+  font-family:inherit;width:100%;background:var(--bg-soft);border:1px solid var(--line);
+  color:var(--text);padding:15px 16px;border-radius:12px;font-size:1.05rem;outline:none;
+}
+input:focus,select:focus{border-color:var(--accent)}
+label.field{display:block;margin-bottom:18px}
+label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:8px;font-weight:600}
+.row{display:flex;gap:12px}
+.row>*{flex:1}
+.hidden{display:none!important}
+
+/* ---------- Onboarding ---------- */
+.screen{flex:1;display:flex;flex-direction:column;padding:26px 22px 30px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.brand .eye{font-size:2rem;filter:drop-shadow(0 4px 10px rgba(91,140,255,.5))}
+.brand h1{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+.brand small{color:var(--muted);font-weight:600}
+.lead{color:var(--muted);line-height:1.6;margin:14px 0 26px}
+.lead b{color:var(--text)}
+
+.steps{display:flex;gap:6px;margin-bottom:22px}
+.steps .dot{height:5px;flex:1;border-radius:3px;background:var(--line)}
+.steps .dot.on{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.step-title{font-size:1.35rem;font-weight:800;margin-bottom:6px}
+.step-sub{color:var(--muted);margin-bottom:22px;line-height:1.5}
+
+.choices{display:grid;gap:12px}
+.choice{
+  display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  padding:16px;border-radius:14px;text-align:left;color:var(--text);font-size:1rem;transition:.15s;
+}
+.choice .emoji{font-size:1.6rem}
+.choice .c-txt b{display:block;font-weight:700}
+.choice .c-txt small{color:var(--muted)}
+.choice.sel{border-color:var(--accent);background:var(--card-2);box-shadow:0 0 0 1px var(--accent) inset}
+.spacer{flex:1}
+
+/* ---------- App shell ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  padding:16px 18px;background:rgba(11,17,32,.82);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .eye{font-size:1.5rem}
+.topbar .who{flex:1}
+.topbar .who b{display:block;font-weight:800;line-height:1.1}
+.topbar .who small{color:var(--muted)}
+.streak{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-weight:800;font-size:.9rem}
+
+.view{flex:1;padding:18px 16px 110px;display:none}
+.view.active{display:block}
+
+.tabbar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;
+  display:flex;background:rgba(11,17,32,.92);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);z-index:30;
+}
+.tabbar button{
+  flex:1;background:none;color:var(--muted);padding:12px 4px 16px;font-size:.7rem;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.tabbar button .ic{font-size:1.3rem}
+.tabbar button.on{color:var(--accent)}
+
+/* ---------- Cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h3{font-size:1.05rem;margin-bottom:4px}
+.card .sub{color:var(--muted);font-size:.85rem}
+.section-h{display:flex;align-items:center;justify-content:space-between;margin:6px 4px 12px}
+.section-h h2{font-size:1.2rem;font-weight:800}
+.section-h .date{color:var(--muted);font-size:.85rem;font-weight:600}
+
+/* progress ring / bar */
+.kcal-wrap{display:flex;align-items:center;gap:18px}
+.ring{position:relative;width:96px;height:96px;flex:0 0 auto}
+.ring svg{transform:rotate(-90deg)}
+.ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .val b{font-size:1.25rem;font-weight:900;line-height:1}
+.ring .val small{font-size:.62rem;color:var(--muted)}
+.kcal-info{flex:1}
+.kcal-info .big{font-size:1.6rem;font-weight:900}
+.kcal-info .lbl{color:var(--muted);font-size:.85rem}
+.macros{display:flex;gap:10px;margin-top:12px}
+.macro{flex:1;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.macro b{display:block;font-size:1.05rem}
+.macro small{color:var(--muted);font-size:.72rem}
+
+/* conscience chat */
+.feed{display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg .av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+.msg .bub{background:var(--card-2);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:12px 14px;line-height:1.45;font-size:.95rem}
+.msg.warn .bub{border-color:rgba(255,176,32,.5)}
+.msg.bad .bub{border-color:rgba(255,93,108,.5)}
+.msg.good .bub{border-color:rgba(51,201,127,.45)}
+.msg .bub .t{display:block;color:var(--muted);font-size:.7rem;margin-top:6px}
+
+/* meal / weigh items */
+.proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.thumb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--bg-soft);border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .tag{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);padding:2px 7px;border-radius:999px;font-size:.65rem;font-weight:700}
+.item{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item .pic{width:54px;height:54px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:var(--bg-soft)}
+.item .meta{flex:1}
+.item .meta b{display:block}
+.item .meta small{color:var(--muted)}
+.item .k{font-weight:800;color:var(--accent)}
+
+.empty{text-align:center;color:var(--muted);padding:30px 10px;line-height:1.6}
+.empty .e{font-size:2.4rem;display:block;margin-bottom:8px}
+
+/* weight chart */
+.chart{width:100%;height:160px;display:block}
+.weight-now{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.weight-now b{font-size:2.4rem;font-weight:900}
+.weight-now .u{color:var(--muted)}
+.delta{font-weight:800;font-size:.95rem}
+.delta.down{color:var(--good)} .delta.up{color:var(--bad)}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(5,8,16,.72);backdrop-filter:blur(4px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{width:100%;max-width:520px;background:var(--bg-soft);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));animation:up .25s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.modal h3{font-size:1.3rem;margin-bottom:4px}
+.modal .sub{color:var(--muted);margin-bottom:18px;line-height:1.5}
+.handle{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 16px}
+
+/* photo capture */
+.capture{
+  border:2px dashed var(--line);border-radius:16px;padding:26px;text-align:center;color:var(--muted);
+  background:var(--card);transition:.15s;
+}
+.capture.has{border-style:solid;border-color:var(--good);padding:0;overflow:hidden}
+.capture .ph{font-size:2.2rem;display:block;margin-bottom:8px}
+.capture img{width:100%;max-height:260px;object-fit:cover;display:block}
+.req{display:inline-flex;align-items:center;gap:6px;background:rgba(255,93,108,.15);color:var(--bad);font-weight:700;font-size:.78rem;padding:5px 10px;border-radius:999px;margin-bottom:14px}
+.proof-ok{background:rgba(51,201,127,.15);color:var(--good)}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--card-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:999px;z-index:80;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1;bottom:110px}
+
+.disclaimer{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:10px;text-align:center}
+.pill-tabs{display:flex;gap:8px;margin-bottom:14px}
+.pill-tabs button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--muted);padding:10px;border-radius:12px;font-weight:700;font-size:.85rem}
+.pill-tabs button.on{background:var(--card-2);color:var(--text);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ ONBOARDING ============ -->
+  <section id="onboarding" class="screen">
+    <div class="brand">
+      <span class="eye">👁️</span>
+      <div>
+        <h1>Conscience</h1>
+        <small>celle qui te lâche pas</small>
+      </div>
+    </div>
+    <p class="lead" id="intro-lead">
+      Je suis ta <b>conscience</b>. Je vais suivre ton poids, ce que tu manges, ta vie.
+      Et attention : <b>je sais que tu peux mentir</b>. Donc à chaque fois, je vais te demander des
+      <b>preuves</b> 📸. On commence ?
+    </p>
+
+    <div class="steps" id="steps"></div>
+
+    <!-- step container -->
+    <div id="ob-step" style="flex:1;display:flex;flex-direction:column"></div>
+
+    <div style="margin-top:20px;display:flex;gap:12px">
+      <button class="btn ghost" id="ob-back" style="flex:0 0 auto;width:auto;padding:16px">Retour</button>
+      <button class="btn" id="ob-next">Continuer</button>
+    </div>
+    <p class="disclaimer">Cette app n'est pas un avis médical. Pour tout objectif santé, parle à un pro.</p>
+  </section>
+
+  <!-- ============ MAIN APP ============ -->
+  <div id="main" class="hidden" style="display:flex;flex-direction:column;flex:1">
+    <header class="topbar">
+      <span class="eye">👁️</span>
+      <div class="who"><b id="hi-name">Salut</b><small id="hi-goal"></small></div>
+      <div class="streak">🔥 <span id="streak">0</span></div>
+    </header>
+
+    <!-- TODAY -->
+    <section id="v-today" class="view active">
+      <div class="section-h">
+        <h2>Aujourd'hui</h2>
+        <span class="date" id="today-date"></span>
+      </div>
+
+      <div class="card">
+        <div class="kcal-wrap">
+          <div class="ring">
+            <svg width="96" height="96">
+              <circle cx="48" cy="48" r="42" stroke="rgba(255,255,255,.08)" stroke-width="10" fill="none"/>
+              <circle id="ring-fg" cx="48" cy="48" r="42" stroke="url(#g)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="263.8" stroke-dashoffset="263.8"/>
+              <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b8cff"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs>
+            </svg>
+            <div class="val"><b id="ring-eaten">0</b><small>/ <span id="ring-goal">0</span></small></div>
+          </div>
+          <div class="kcal-info">
+            <div class="big"><span id="kcal-left">0</span> kcal</div>
+            <div class="lbl" id="kcal-lbl">à manger aujourd'hui</div>
+            <div class="macros">
+              <div class="macro"><b id="m-prot">0g</b><small>Protéines</small></div>
+              <div class="macro"><b id="m-carb">0g</b><small>Glucides</small></div>
+              <div class="macro"><b id="m-fat">0g</b><small>Lipides</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:16px">
+        <button class="btn good" id="btn-meal">📸 Ajouter un repas</button>
+        <button class="btn secondary" id="btn-weigh-2">⚖️ Me peser</button>
+      </div>
+
+      <div class="card">
+        <div class="section-h" style="margin:0 0 12px">
+          <h2 style="font-size:1.05rem">Ta conscience te parle</h2>
+        </div>
+        <div class="feed" id="feed"></div>
+      </div>
+    </section>
+
+    <!-- MEALS -->
+    <section id="v-meals" class="view">
+      <div class="section-h"><h2>Mes repas</h2><span class="date" id="meals-date"></span></div>
+      <button class="btn good" id="btn-meal-2" style="margin-bottom:16px">📸 Photographier un repas</button>
+      <div class="card" id="meals-list"></div>
+    </section>
+
+    <!-- WEIGHT -->
+    <section id="v-weight" class="view">
+      <div class="section-h"><h2>Mon poids</h2></div>
+      <div class="card">
+        <div class="weight-now">
+          <b id="w-current">—</b><span class="u">kg</span>
+          <span class="delta" id="w-delta"></span>
+        </div>
+        <div class="sub" id="w-goal-line">Objectif —</div>
+        <svg class="chart" id="w-chart" viewBox="0 0 320 160" preserveAspectRatio="none"></svg>
+      </div>
+      <button class="btn" id="btn-weigh">⚖️ Nouvelle pesée (avec preuve)</button>
+      <div class="card" style="margin-top:16px">
+        <h3>Historique des pesées</h3>
+        <div id="weigh-list"></div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="v-profile" class="view">
+      <div class="section-h"><h2>Profil</h2></div>
+      <div class="card" id="profile-card"></div>
+      <button class="btn secondary" id="btn-edit-goal" style="margin-bottom:12px">🎯 Changer d'objectif</button>
+      <button class="btn ghost danger" id="btn-reset">Tout effacer et recommencer</button>
+      <p class="disclaimer">Tes données restent sur ton téléphone (rien n'est envoyé sur internet). Les photos aussi.</p>
+    </section>
+
+    <!-- TABBAR -->
+    <nav class="tabbar">
+      <button data-tab="today" class="on"><span class="ic">🏠</span>Aujourd'hui</button>
+      <button data-tab="meals"><span class="ic">🍽️</span>Repas</button>
+      <button data-tab="weight"><span class="ic">⚖️</span>Poids</button>
+      <button data-tab="profile"><span class="ic">👤</span>Profil</button>
+    </nav>
+  </div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Conscience — app de bonne conscience (v1, 100% local)
+   ========================================================= */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const STORE_KEY = 'conscience.v1';
+const todayKey = (d=new Date())=> d.toISOString().slice(0,10);
+const nowTime = ()=> new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+/* ---------- State ---------- */
+let S = load();
+function load(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || null; }catch(e){ return null; }
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+
+function freshState(){
+  return {
+    profile:null,            // {name,sex,age,height,weight,activity,goal}
+    meals:{},                // {dateKey:[{id,time,photo,kcal,note}]}
+    weighIns:[],             // [{date,time,weight,photo}]
+    feed:{},                 // {dateKey:[{type,text,time}]}
+    lastConfront:null,
+    createdAt:Date.now()
+  };
+}
+
+/* ---------- Health math ---------- */
+function bmr(p){ // Mifflin-St Jeor
+  const base = 10*p.weight + 6.25*p.height - 5*p.age;
+  return p.sex==='h' ? base+5 : base-161;
+}
+const ACT = {sed:1.2, leger:1.375, modere:1.55, actif:1.725, intense:1.9};
+function tdee(p){ return bmr(p) * (ACT[p.activity]||1.2); }
+function targetKcal(p){
+  let t = tdee(p);
+  if(p.goal==='maigrir') t -= 500;
+  else if(p.goal==='prendre') t += 350;
+  // garde-fou santé : plancher raisonnable
+  const floor = p.sex==='h' ? 1500 : 1300;
+  return Math.max(floor, Math.round(t/10)*10);
+}
+function macros(kcal,goal){
+  // prot élevées si maigrir/prendre, sinon équilibré
+  const protRatio = goal==='maigrir'?.34 : goal==='prendre'?.30 : .28;
+  const fatRatio = .28;
+  const carbRatio = 1-protRatio-fatRatio;
+  return {
+    prot: Math.round(kcal*protRatio/4),
+    fat:  Math.round(kcal*fatRatio/9),
+    carb: Math.round(kcal*carbRatio/4),
+  };
+}
+
+/* ---------- Image -> compressed dataURL ---------- */
+function fileToThumb(file, max=520, q=.62){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      let {width:w,height:h}=img;
+      if(w>h && w>max){ h=h*max/w; w=max; }
+      else if(h>=w && h>max){ w=w*max/h; h=max; }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',q));
+    };
+    img.onerror=rej; img.src=url;
+  });
+}
+
+/* =========================================================
+   ONBOARDING
+   ========================================================= */
+const OB = {
+  i:0,
+  data:{name:'',sex:'',age:'',height:'',weight:'',activity:'',goal:''},
+  steps:[
+    {key:'name', title:'On se présente', sub:'Comment je dois t\'appeler ?', render:nameStep},
+    {key:'sex',  title:'Tu es ?', sub:'Pour calculer ton métabolisme correctement.', render:sexStep},
+    {key:'body', title:'Ton check-up', sub:'Sois honnête. De toute façon, je vais vérifier. 👀', render:bodyStep},
+    {key:'activity', title:'Tu bouges combien ?', sub:'Ton niveau d\'activité au quotidien.', render:activityStep},
+    {key:'goal', title:'Ton objectif', sub:'Qu\'est-ce que tu veux que je t\'aide à faire ?', render:goalStep},
+  ]
+};
+function renderSteps(){
+  $('#steps').innerHTML = OB.steps.map((_,i)=>`<div class="dot ${i<=OB.i?'on':''}"></div>`).join('');
+}
+function renderOB(){
+  renderSteps();
+  const step = OB.steps[OB.i];
+  $('#ob-step').innerHTML = `<div class="step-title">${step.title}</div><div class="step-sub">${step.sub}</div>`;
+  step.render($('#ob-step'));
+  $('#ob-back').style.visibility = OB.i===0 ? 'hidden':'visible';
+  $('#ob-next').textContent = OB.i===OB.steps.length-1 ? 'C\'est parti 🚀' : 'Continuer';
+  validateOB();
+}
+function nameStep(el){
+  el.insertAdjacentHTML('beforeend',
+    `<label class="field"><span>Ton prénom / pseudo</span><input id="f-name" value="${OB.data.name}" placeholder="ex: David" autocomplete="off"></label>`);
+  $('#f-name').addEventListener('input',e=>{OB.data.name=e.target.value.trim();validateOB();});
+}
+function sexStep(el){
+  const opt=(v,emo,t)=>`<button class="choice ${OB.data.sex===v?'sel':''}" data-sex="${v}"><span class="emoji">${emo}</span><span class="c-txt"><b>${t}</b></span></button>`;
+  el.insertAdjacentHTML('beforeend',`<div class="choices">${opt('h','💪','Un homme')}${opt('f','✨','Une femme')}</div>`);
+  $$('[data-sex]',el).forEach(b=>b.onclick=()=>{OB.data.sex=b.dataset.sex;renderOB();});
+}
+function bodyStep(el){
+  el.insertAdjacentHTML('beforeend',`
+    <label class="field"><span>Âge</span><input id="f-age" type="number" inputmode="numeric" value="${OB.data.age}" placeholder="ex: 19"></label>
+    <div class="row">
+      <label class="field"><span>Taille (cm)</span><input id="f-height" type="number" inputmode="numeric" value="${OB.data.height}" placeholder="175"></label>
+      <label class="field"><span>Poids actuel (kg)</span><input id="f-weight" type="number" inputmode="decimal" value="${OB.data.weight}" placeholder="72"></label>
+    </div>
+    <div class="req">🔒 Ton poids, je te le ferai prouver avec une photo du pèse-personne plus tard.</div>
+  `);
+  $('#f-age').oninput=e=>{OB.data.age=+e.target.value||'';validateOB();};
+  $('#f-height').oninput=e=>{OB.data.height=+e.target.value||'';validateOB();};
+  $('#f-weight').oninput=e=>{OB.data.weight=+e.target.value||'';validateOB();};
+}
+function activityStep(el){
+  const opts=[
+    ['sed','🛋️','Sédentaire','Bureau, peu de sport'],
+    ['leger','🚶','Léger','1-2 séances / semaine'],
+    ['modere','🏃','Modéré','3-4 séances / semaine'],
+    ['actif','🏋️','Actif','5-6 séances / semaine'],
+    ['intense','🔥','Intense','Sport pro / boulot physique'],
+  ];
+  el.insertAdjacentHTML('beforeend',`<div class="choices">${opts.map(([v,e,t,s])=>
+    `<button class="choice ${OB.data.activity===v?'sel':''}" data-act="${v}"><span class="emoji">${e}</span><span class="c-txt"><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>`);
+  $$('[data-act]',el).forEach(b=>b.onclick=()=>{OB.data.activity=b.dataset.act;renderOB();});
+}
+function goalStep(el){
+  const opts=[
+    ['maigrir','📉','Maigrir','Perdre du poids, en douceur'],
+    ['stabiliser','⚖️','Me stabiliser','Garder la forme, manger sain'],
+    ['prendre','📈','Prendre du muscle','Prise de masse propre'],
+  ];
+  el.insertAdjacentHTML('beforeend',`<div class="choices">${opts.map(([v,e,t,s])=>
+    `<button class="choice ${OB.data.goal===v?'sel':''}" data-goal="${v}"><span class="emoji">${e}</span><span class="c-txt"><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>`);
+  $$('[data-goal]',el).forEach(b=>b.onclick=()=>{OB.data.goal=b.dataset.goal;renderOB();});
+}
+function validateOB(){
+  const d=OB.data, k=OB.steps[OB.i].key;
+  let ok=true;
+  if(k==='name') ok=d.name.length>=1;
+  if(k==='sex') ok=!!d.sex;
+  if(k==='body') ok=d.age>0 && d.height>0 && d.weight>0;
+  if(k==='activity') ok=!!d.activity;
+  if(k==='goal') ok=!!d.goal;
+  $('#ob-next').disabled=!ok;
+}
+$('#ob-back').onclick=()=>{ if(OB.i>0){OB.i--;renderOB();} };
+$('#ob-next').onclick=()=>{
+  if($('#ob-next').disabled) return;
+  if(OB.i<OB.steps.length-1){ OB.i++; renderOB(); }
+  else finishOnboarding();
+};
+function finishOnboarding(){
+  S = S || freshState();
+  S.profile = {...OB.data};
+  // pesée initiale (déclarée, sans preuve) — marquée comme à confirmer
+  S.weighIns = [{date:todayKey(), time:nowTime(), weight:OB.data.weight, photo:null, declared:true}];
+  pushFeed('good', `Enchanté ${OB.data.name} 👋 J'ai noté ${OB.data.weight}kg. Mais ça, c'est ce que TU dis. La prochaine pesée, tu me la prouves en photo. 😏`);
+  pushFeed('info', conscienceDailyPlan());
+  save();
+  boot();
+}
+
+/* =========================================================
+   CONSCIENCE LOGIC (messages)
+   ========================================================= */
+function pushFeed(type,text){
+  const k=todayKey();
+  (S.feed[k] = S.feed[k]||[]).push({type,text,time:nowTime()});
+}
+function conscienceDailyPlan(){
+  const p=S.profile, kcal=targetKcal(p), m=macros(kcal,p.goal);
+  const verb = p.goal==='maigrir'?'Pour maigrir tranquille' : p.goal==='prendre'?'Pour prendre du muscle propre' : 'Pour rester en forme';
+  return `${verb}, aujourd'hui tu vises <b>${kcal} kcal</b> : environ ${m.prot}g de protéines, ${m.carb}g de glucides, ${m.fat}g de lipides. Et chaque repas → <b>photo</b>. Pas de photo, pas de validation. 📸`;
+}
+function eatenToday(){
+  const ms=S.meals[todayKey()]||[];
+  return ms.reduce((a,b)=>a+(+b.kcal||0),0);
+}
+// confrontation selon l'heure et le nombre de repas photographiés
+function maybeConfront(){
+  const k=todayKey();
+  const ms=S.meals[k]||[];
+  const h=new Date().getHours();
+  let msg=null,type='warn';
+  if(h>=11 && h<14 && ms.length===0){
+    msg=`Il est ${nowTime()} et t'as encore rien mangé ?! Envoie-moi une photo de ton p'tit déj / déjeuner. Et me dis pas que t'as "oublié". 🤨`;
+  } else if(h>=14 && h<19 && ms.length<2){
+    msg=`On est l'aprem et je vois ${ms.length} repas seulement. T'as sauté un repas ou t'as juste pas pris la photo ? Parce que sauter, c'est pas la stratégie. 📸`;
+  } else if(h>=21 && ms.length===0){
+    msg=`Toute la journée sans une seule photo de repas. Soit t'as rien mangé (pas bien), soit <b>t'as craqué</b> et t'oses pas me montrer. Lequel des deux ? 👀`;
+    type='bad';
+  }
+  if(msg && S.lastConfront!==k+msg.slice(0,12)){
+    pushFeed(type,msg);
+    S.lastConfront=k+msg.slice(0,12);
+    save();
+  }
+}
+
+/* =========================================================
+   BOOT / RENDER MAIN
+   ========================================================= */
+function boot(){
+  $('#onboarding').classList.add('hidden');
+  $('#main').classList.remove('hidden');
+  $('#hi-name').textContent = `Salut ${S.profile.name} 👋`;
+  const goalTxt={maigrir:'Objectif : maigrir 📉',stabiliser:'Objectif : se stabiliser ⚖️',prendre:'Objectif : prise de masse 📈'};
+  $('#hi-goal').textContent = goalTxt[S.profile.goal];
+  maybeConfront();
+  renderAll();
+}
+function renderAll(){ renderToday(); renderMeals(); renderWeight(); renderProfile(); renderStreak(); }
+
+function renderToday(){
+  $('#today-date').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const p=S.profile, goal=targetKcal(p), eaten=eatenToday(), left=Math.max(0,goal-eaten);
+  const m=macros(goal,p.goal);
+  $('#ring-eaten').textContent=eaten;
+  $('#ring-goal').textContent=goal;
+  $('#kcal-left').textContent = p.goal==='prendre'? eaten : left;
+  $('#kcal-lbl').textContent = p.goal==='prendre' ? 'mangées / '+goal+' visées' : (left>0?'qu\'il te reste':'objectif atteint ✅');
+  const frac=Math.min(1,goal?eaten/goal:0);
+  $('#ring-fg').style.strokeDashoffset = 263.8*(1-frac);
+  $('#m-prot').textContent=m.prot+'g'; $('#m-carb').textContent=m.carb+'g'; $('#m-fat').textContent=m.fat+'g';
+  // feed
+  const feed=(S.feed[todayKey()]||[]);
+  $('#feed').innerHTML = feed.length? feed.slice().reverse().map(f=>`
+    <div class="msg ${f.type}">
+      <div class="av">👁️</div>
+      <div class="bub">${f.text}<span class="t">${f.time}</span></div>
+    </div>`).join('') :
+    `<div class="empty"><span class="e">👁️</span>Ta conscience attend de voir ce que tu vas faire aujourd'hui...</div>`;
+}
+
+function renderMeals(){
+  $('#meals-date').textContent = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+  const ms=(S.meals[todayKey()]||[]);
+  $('#meals-list').innerHTML = ms.length? ms.slice().reverse().map(meal=>`
+    <div class="item">
+      <img class="pic" src="${meal.photo}" alt="repas">
+      <div class="meta"><b>${meal.note||'Repas'}</b><small>${meal.time}</small></div>
+      <div class="k">${meal.kcal} kcal</div>
+    </div>`).join('') :
+    `<div class="empty"><span class="e">🍽️</span>Aucun repas aujourd'hui.<br>Chaque repas se prouve par une photo.</div>`;
+}
+
+function renderWeight(){
+  const w=S.weighIns;
+  const last=w[w.length-1];
+  const first=w[0];
+  $('#w-current').textContent = last? last.weight : '—';
+  const goalKg = S.profile.goal==='maigrir'?'perdre':S.profile.goal==='prendre'?'prendre':'stabiliser';
+  $('#w-goal-line').textContent = `Départ ${first?first.weight:'—'}kg · Objectif : ${goalKg}`;
+  if(w.length>=2){
+    const d=(last.weight-first.weight);
+    const el=$('#w-delta'); el.textContent=(d>0?'+':'')+d.toFixed(1)+' kg';
+    el.className='delta '+(d<0?'down':d>0?'up':'');
+  } else $('#w-delta').textContent='';
+  drawChart(w.map(x=>x.weight));
+  $('#weigh-list').innerHTML = w.length? w.slice().reverse().map(x=>`
+    <div class="item">
+      ${x.photo?`<img class="pic" src="${x.photo}">`:`<div class="pic" style="display:grid;place-items:center;font-size:1.3rem">${x.declared?'🤔':'⚖️'}</div>`}
+      <div class="meta"><b>${x.weight} kg</b><small>${frDate(x.date)} · ${x.time}</small></div>
+      <div>${x.photo?'<span class="req proof-ok" style="margin:0">✓ prouvé</span>':'<span class="req" style="margin:0">non prouvé</span>'}</div>
+    </div>`).join('') : `<div class="empty">Pas encore de pesée.</div>`;
+}
+function frDate(k){ const [y,m,d]=k.split('-'); return `${d}/${m}`; }
+function drawChart(vals){
+  const svg=$('#w-chart'); const W=320,H=160,pad=14;
+  if(vals.length<2){ svg.innerHTML=`<text x="160" y="80" fill="#8b97b3" font-size="11" text-anchor="middle">Pèse-toi régulièrement pour voir ta courbe</text>`; return; }
+  const min=Math.min(...vals), max=Math.max(...vals), rng=(max-min)||1;
+  const pts=vals.map((v,i)=>{
+    const x=pad+(W-2*pad)*(i/(vals.length-1));
+    const y=pad+(H-2*pad)*(1-(v-min)/rng);
+    return [x,y];
+  });
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=line+` L${pts[pts.length-1][0].toFixed(1)} ${H-pad} L${pad} ${H-pad} Z`;
+  svg.innerHTML=`
+    <defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b8cff" stop-opacity=".35"/><stop offset="1" stop-color="#5b8cff" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#wg)"/>
+    <path d="${line}" fill="none" stroke="#5b8cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="#7c5cff"/>`).join('')}`;
+}
+
+function renderProfile(){
+  const p=S.profile, kcal=targetKcal(p), bm=Math.round(bmr(p)), td=Math.round(tdee(p));
+  const imc=(p.weight/((p.height/100)**2)).toFixed(1);
+  const actTxt={sed:'Sédentaire',leger:'Léger',modere:'Modéré',actif:'Actif',intense:'Intense'};
+  $('#profile-card').innerHTML=`
+    <div class="item"><div class="meta"><small>Prénom</small><b>${p.name}</b></div></div>
+    <div class="item"><div class="meta"><small>Âge / Sexe</small><b>${p.age} ans · ${p.sex==='h'?'Homme':'Femme'}</b></div></div>
+    <div class="item"><div class="meta"><small>Taille</small><b>${p.height} cm</b></div></div>
+    <div class="item"><div class="meta"><small>IMC estimé</small><b>${imc}</b></div></div>
+    <div class="item"><div class="meta"><small>Activité</small><b>${actTxt[p.activity]}</b></div></div>
+    <div class="item"><div class="meta"><small>Métabolisme de base</small><b>${bm} kcal</b></div></div>
+    <div class="item"><div class="meta"><small>Dépense estimée / jour</small><b>${td} kcal</b></div></div>
+    <div class="item"><div class="meta"><small>Cible quotidienne</small><b class="k">${kcal} kcal</b></div></div>`;
+}
+function renderStreak(){
+  // streak = jours consécutifs (jusqu'à aujourd'hui) avec >=1 repas photographié
+  let s=0; let d=new Date();
+  for(;;){
+    const k=todayKey(d);
+    if((S.meals[k]||[]).length>0){ s++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  $('#streak').textContent=s;
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+$$('.tabbar button').forEach(b=>b.onclick=()=>{
+  $$('.tabbar button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  $('#v-'+b.dataset.tab).classList.add('active');
+});
+
+/* =========================================================
+   MODALS : repas & pesée (avec preuve photo obligatoire)
+   ========================================================= */
+function openModal(html){ $('#modal').innerHTML=`<div class="handle"></div>`+html; $('#modal-bg').classList.add('show'); }
+function closeModal(){ $('#modal-bg').classList.remove('show'); }
+$('#modal-bg').onclick=e=>{ if(e.target.id==='modal-bg') closeModal(); };
+
+function captureBlock(id,label){
+  return `
+    <div class="req" id="${id}-req">📸 Photo obligatoire — sinon ta conscience valide pas</div>
+    <label class="capture" id="${id}-cap">
+      <span class="ph">📷</span>${label}
+      <input type="file" accept="image/*" capture="environment" id="${id}-file" style="display:none">
+    </label>`;
+}
+function wireCapture(id,onReady){
+  const cap=$('#'+id+'-cap'), file=$('#'+id+'-file'); let data=null;
+  cap.onclick=(e)=>{ if(e.target!==file) file.click(); };
+  file.onchange=async()=>{
+    if(!file.files[0])return;
+    data=await fileToThumb(file.files[0]);
+    cap.classList.add('has'); cap.innerHTML=`<img src="${data}">`;
+    cap.onclick=()=>file.click();
+    $('#'+id+'-req').classList.add('proof-ok');
+    $('#'+id+'-req').innerHTML='✅ Preuve reçue';
+    onReady(()=>data);
+  };
+}
+
+/* ---- Repas ---- */
+function openMeal(){
+  openModal(`
+    <h3>📸 Photographie ton repas</h3>
+    <p class="sub">Montre-moi vraiment ce que tu manges. La photo, c'est la preuve.</p>
+    ${captureBlock('meal','Prends ton repas en photo')}
+    <label class="field"><span>C'est quoi ? (optionnel)</span><input id="meal-note" placeholder="ex: poulet riz brocoli"></label>
+    <label class="field"><span>Estimation calories (kcal)</span><input id="meal-kcal" type="number" inputmode="numeric" placeholder="ex: 600"></label>
+    <button class="btn good" id="meal-save" disabled>Valider mon repas</button>
+    <button class="btn ghost" id="meal-cancel">Annuler</button>
+  `);
+  let getPhoto=null;
+  wireCapture('meal',(g)=>{ getPhoto=g; refresh(); });
+  const refresh=()=>{ $('#meal-save').disabled = !getPhoto; };
+  $('#meal-kcal').oninput=refresh;
+  $('#meal-cancel').onclick=closeModal;
+  $('#meal-save').onclick=()=>{
+    if(!getPhoto) return;
+    const k=todayKey();
+    const kcal=+$('#meal-kcal').value||estimateKcal();
+    (S.meals[k]=S.meals[k]||[]).push({id:Date.now(),time:nowTime(),photo:getPhoto(),kcal,note:$('#meal-note').value.trim()});
+    reactToMeal(kcal);
+    save(); closeModal(); renderAll(); toast('Repas enregistré ✅');
+  };
+}
+function estimateKcal(){ return 550; } // valeur par défaut si l'utilisateur ne renseigne pas
+function reactToMeal(kcal){
+  const goal=targetKcal(S.profile);
+  const total=eatenToday(); // inclut le repas qu'on vient d'ajouter (push avant l'appel)
+  let type='good',msg;
+  if(total>goal*1.15){
+    type='bad'; msg=`Là tu as dépassé ta cible (${total}/${goal} kcal). T'as un peu craqué non ? Demain on rééquilibre, pas de panique mais je note. 👀`;
+  } else if(total>=goal*0.85){
+    type='good'; msg=`Nickel, t'es pile dans ton objectif (${total}/${goal} kcal). Continue comme ça, je suis fier. 👏`;
+  } else {
+    type='info'; msg=`Bien reçu, photo validée. Il te reste ${Math.max(0,goal-total)} kcal pour la journée. 📸`;
+  }
+  pushFeed(type,msg);
+}
+
+/* ---- Pesée ---- */
+function openWeigh(){
+  openModal(`
+    <h3>⚖️ Pesée avec preuve</h3>
+    <p class="sub">Monte sur le pèse-personne et <b>prends la photo avec tes pieds dessus et le chiffre visible</b>. Je vérifie. 👀</p>
+    ${captureBlock('weigh','Photo du pèse-personne (pieds + chiffre)')}
+    <label class="field"><span>Ton poids affiché (kg)</span><input id="weigh-val" type="number" inputmode="decimal" placeholder="ex: 71.5"></label>
+    <button class="btn" id="weigh-save" disabled>Valider ma pesée</button>
+    <button class="btn ghost" id="weigh-cancel">Annuler</button>
+  `);
+  let getPhoto=null;
+  wireCapture('weigh',(g)=>{ getPhoto=g; refresh(); });
+  const refresh=()=>{ $('#weigh-save').disabled = !(getPhoto && +$('#weigh-val').value>0); };
+  $('#weigh-val').oninput=refresh;
+  $('#weigh-cancel').onclick=closeModal;
+  $('#weigh-save').onclick=()=>{
+    const v=+$('#weigh-val').value;
+    if(!getPhoto || !(v>0)) return;
+    const prev=S.weighIns[S.weighIns.length-1];
+    S.weighIns.push({date:todayKey(),time:nowTime(),weight:v,photo:getPhoto()});
+    reactToWeigh(v,prev);
+    save(); closeModal(); renderAll(); $$('.tabbar button')[2].click(); toast('Pesée prouvée ✅');
+  };
+}
+function reactToWeigh(v,prev){
+  if(!prev){ pushFeed('good',`Première pesée prouvée : ${v}kg. Maintenant j'ai une vraie base. On y va. 💪`); return; }
+  const d=+(v-prev.weight).toFixed(1), g=S.profile.goal;
+  let type='info',msg;
+  if(g==='maigrir'){
+    if(d<0){ type='good'; msg=`${v}kg, soit ${d}kg 🎉 Ça descend ! C'est exactement ce qu'on veut. Bravo, et continue les photos repas.`; }
+    else if(d>0){ type='warn'; msg=`${v}kg, soit +${d}kg. Ça remonte. Soit t'as craqué cette semaine, soit on serre la vis. On regarde tes repas ensemble.`; }
+    else { type='info'; msg=`${v}kg, stable. Pas de perte cette fois. On va devoir être plus carré sur les repas.`; }
+  } else if(g==='prendre'){
+    if(d>0){ type='good'; msg=`${v}kg, soit +${d}kg 💪 La masse monte. Continue de bien manger et de prouver tes repas.`; }
+    else { type='warn'; msg=`${v}kg (${d}kg). Pour prendre, faut manger plus. Tes photos repas vont me dire si tu manges assez.`; }
+  } else {
+    type=Math.abs(d)<=0.7?'good':'warn';
+    msg=`${v}kg (${d>0?'+':''}${d}kg). ${Math.abs(d)<=0.7?'Stable, parfait, c\'est l\'objectif. 👌':'Ça bouge un peu, on garde un œil.'}`;
+  }
+  pushFeed(type,msg);
+}
+
+/* ---- Buttons ---- */
+$('#btn-meal').onclick=openMeal;
+$('#btn-meal-2').onclick=openMeal;
+$('#btn-weigh').onclick=openWeigh;
+$('#btn-weigh-2').onclick=openWeigh;
+
+$('#btn-edit-goal').onclick=()=>{
+  openModal(`
+    <h3>🎯 Changer d'objectif</h3>
+    <p class="sub">Je recalcule tout direct.</p>
+    <div class="choices" id="goal-choices">
+      ${[['maigrir','📉','Maigrir'],['stabiliser','⚖️','Me stabiliser'],['prendre','📈','Prise de masse']]
+        .map(([v,e,t])=>`<button class="choice ${S.profile.goal===v?'sel':''}" data-g="${v}"><span class="emoji">${e}</span><span class="c-txt"><b>${t}</b></span></button>`).join('')}
+    </div>
+    <button class="btn ghost" id="goal-cancel" style="margin-top:14px">Fermer</button>`);
+  $$('#goal-choices [data-g]').forEach(b=>b.onclick=()=>{
+    S.profile.goal=b.dataset.g; pushFeed('info',conscienceDailyPlan()); save(); closeModal(); boot(); toast('Objectif mis à jour 🎯');
+  });
+  $('#goal-cancel').onclick=closeModal;
+};
+$('#btn-reset').onclick=()=>{
+  openModal(`<h3>Tout effacer ?</h3><p class="sub">Ça supprime ton profil, tes repas et tes pesées. Irréversible.</p>
+    <button class="btn danger" id="reset-yes">Oui, tout effacer</button>
+    <button class="btn ghost" id="reset-no">Non, annuler</button>`);
+  $('#reset-yes').onclick=()=>{ localStorage.removeItem(STORE_KEY); location.reload(); };
+  $('#reset-no').onclick=closeModal;
+};
+
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2200); }
+
+/* =========================================================
+   START
+   ========================================================= */
+if(S && S.profile){ boot(); }
+else { OB.i=0; renderOB(); }
+</script>
+</body>
+</html>
