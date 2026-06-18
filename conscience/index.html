@@ -6,7 +6,12 @@
 <title>Conscience — celle qui te lâche pas</title>
 <meta name="description" content="Ta conscience dans la poche. Elle te fixe tes objectifs, te suit au quotidien et te réclame des preuves. Impossible de lui mentir.">
 <meta name="theme-color" content="#0b1120">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👁️</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Conscience">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -205,6 +210,30 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
 .voice-btn{background:var(--card);border:1px solid var(--line);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.1rem;color:var(--text);flex:0 0 auto}
 .voice-btn.off{opacity:.4}
 
+/* score card */
+.score-card{display:flex;align-items:center;gap:16px}
+.score-ring{position:relative;width:64px;height:64px;flex:0 0 auto}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring span{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;font-size:1rem}
+.score-txt b{display:block;font-size:1rem}
+.score-txt small{color:var(--muted);font-size:.82rem;line-height:1.4}
+
+/* missions */
+#missions-add{cursor:pointer;color:var(--accent);font-weight:700}
+.mission{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.mission:last-child{border-bottom:none}
+.mission .me{font-size:1.5rem;flex:0 0 auto;width:30px;text-align:center}
+.mission .mt{flex:1;min-width:0}
+.mission .mt b{display:block;font-weight:600}
+.mission .mt small{color:var(--muted);font-size:.78rem}
+.mission .act{flex:0 0 auto;border:1px solid var(--line);background:var(--card-2);color:var(--text);font-weight:700;font-size:.82rem;padding:9px 14px;border-radius:999px}
+.mission.ok{opacity:.62}
+.mission.ok .act{background:rgba(51,201,127,.18);border-color:rgba(51,201,127,.5);color:var(--good)}
+.mission.miss .act{background:rgba(255,93,108,.15);border-color:rgba(255,93,108,.5);color:var(--bad)}
+.mini-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.mini-tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:999px;font-weight:700;font-size:.8rem}
+.mini-tabs button.on{background:var(--card-2);color:var(--text);border-color:var(--accent)}
+
 /* chat / IA */
 #v-chat.active{display:flex;flex-direction:column;padding:0}
 .chat-status{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg-soft)}
@@ -274,6 +303,21 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
         <span class="date" id="today-date"></span>
       </div>
 
+      <div class="card score-card" id="score-card">
+        <div class="score-ring">
+          <svg width="64" height="64">
+            <circle cx="32" cy="32" r="27" stroke="rgba(255,255,255,.08)" stroke-width="7" fill="none"/>
+            <circle id="score-fg" cx="32" cy="32" r="27" stroke="url(#g2)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+            <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#33c97f"/><stop offset="1" stop-color="#5b8cff"/></linearGradient></defs>
+          </svg>
+          <span id="score-val">—</span>
+        </div>
+        <div class="score-txt">
+          <b>Indice de conscience</b>
+          <small id="score-lbl">Prouve tes engagements pour faire monter ton score.</small>
+        </div>
+      </div>
+
       <div class="card">
         <div class="kcal-wrap">
           <div class="ring">
@@ -299,6 +343,14 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
       <div class="row" style="margin-bottom:16px">
         <button class="btn good" id="btn-meal">📸 Ajouter un repas</button>
         <button class="btn secondary" id="btn-weigh-2">⚖️ Me peser</button>
+      </div>
+
+      <div class="card" id="missions-card">
+        <div class="section-h" style="margin:0 0 6px">
+          <h2 style="font-size:1.05rem">🎯 Tes missions du jour</h2>
+          <span class="date" id="missions-add">+ ajouter</span>
+        </div>
+        <div id="missions-list"></div>
       </div>
 
       <div class="card">
@@ -338,7 +390,10 @@ label.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom
     <section id="v-profile" class="view">
       <div class="section-h"><h2>Profil</h2></div>
       <div class="card" id="profile-card"></div>
-      <button class="btn secondary" id="btn-edit-goal" style="margin-bottom:12px">🎯 Changer d'objectif</button>
+      <button class="btn secondary" id="btn-manage-eng" style="margin-bottom:12px">🎯 Gérer mes engagements</button>
+      <button class="btn secondary" id="btn-edit-goal" style="margin-bottom:12px">⚖️ Changer d'objectif poids</button>
+      <button class="btn secondary" id="btn-reminders" style="margin-bottom:12px">🔔 Activer les rappels</button>
+      <button class="btn secondary" id="btn-install" style="margin-bottom:12px;display:none">📲 Installer l'app</button>
       <button class="btn ghost danger" id="btn-reset">Tout effacer et recommencer</button>
       <p class="disclaimer">Tes données restent sur ton téléphone (rien n'est envoyé sur internet). Les photos aussi.</p>
     </section>
@@ -384,7 +439,15 @@ const nowTime = ()=> new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minut
 /* ---------- State ---------- */
 let S = load();
 function load(){
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || null; }catch(e){ return null; }
+  let s=null;
+  try{ s = JSON.parse(localStorage.getItem(STORE_KEY)) || null; }catch(e){ s=null; }
+  if(s){ // migrations douces pour les anciennes versions
+    s.engagements = s.engagements || [];
+    s.logs = s.logs || {};
+    s.chat = s.chat || [];
+    s.reminders = (s.reminders!=null) ? s.reminders : false;
+  }
+  return s;
 }
 function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
 
@@ -393,11 +456,47 @@ function freshState(){
     profile:null,            // {name,sex,age,height,weight,activity,goal}
     meals:{},                // {dateKey:[{id,time,photo,kcal,note}]}
     weighIns:[],             // [{date,time,weight,photo}]
+    engagements:[],          // [{id,emoji,title,type,proof,target,unit,dir,remindAt,tip}]
+    logs:{},                 // {dateKey:{engId:{done,value,photo,time}}}
     feed:{},                 // {dateKey:[{type,text,time}]}
     chat:[],                 // [{role:'me'|'ai',text}]
+    reminders:false,
     lastConfront:null,
     createdAt:Date.now()
   };
+}
+
+/* ---------- Engagements (domaines de vie surveillés) ---------- */
+const PRESETS = [
+  {id:'sport',   emoji:'💪', title:'Faire du sport',          type:'check',  proof:true,  remindAt:'18:00', tip:'Photo à la salle / en sueur'},
+  {id:'eau',     emoji:'💧', title:'Boire de l\'eau',          type:'number', proof:false, target:8, unit:'verres', dir:'min', remindAt:'15:00'},
+  {id:'sommeil', emoji:'😴', title:'Bien dormir',              type:'number', proof:false, target:7, unit:'h',      dir:'min', remindAt:'09:00'},
+  {id:'clope',   emoji:'🚭', title:'Pas de cigarette',         type:'check',  proof:false, remindAt:'21:00'},
+  {id:'ecran',   emoji:'📵', title:'Limiter les écrans',       type:'number', proof:false, target:3, unit:'h',      dir:'max', remindAt:'21:30'},
+  {id:'argent',  emoji:'💸', title:'Pas de dépense inutile',   type:'check',  proof:true,  remindAt:'20:00', tip:'Capture du compte / du ticket'},
+  {id:'lecture', emoji:'📖', title:'Lire / apprendre',         type:'number', proof:false, target:20, unit:'min',  dir:'min', remindAt:'21:00'},
+  {id:'priere',  emoji:'🙏', title:'Spiritualité / prière',    type:'check',  proof:false, remindAt:'19:00'},
+];
+function logToday(id){ return (S.logs[todayKey()]||{})[id]; }
+function isProven(e){
+  const l=logToday(e.id); if(!l) return false;
+  if(e.proof && !l.photo) return false;
+  if(e.type==='check')  return !!l.done;
+  if(e.type==='number') return l.value!=null;
+  return true;
+}
+function isSuccess(e){
+  const l=logToday(e.id); if(!isProven(e)) return false;
+  if(e.type==='number') return e.dir==='max' ? (+l.value<=e.target) : (+l.value>=e.target);
+  return !!l.done;
+}
+function consciencePct(){
+  // mélange engagements + repas/pesée du jour
+  const parts=[];
+  S.engagements.forEach(e=>parts.push(isSuccess(e)?1:0));
+  parts.push((S.meals[todayKey()]||[]).length>0 ? 1 : 0); // au moins 1 repas prouvé
+  if(!parts.length) return null;
+  return Math.round(100*parts.reduce((a,b)=>a+b,0)/parts.length);
 }
 
 /* ---------- Health math ---------- */
@@ -450,13 +549,14 @@ function fileToThumb(file, max=520, q=.62){
    ========================================================= */
 const OB = {
   i:0,
-  data:{name:'',sex:'',age:'',height:'',weight:'',activity:'',goal:''},
+  data:{name:'',sex:'',age:'',height:'',weight:'',activity:'',goal:'',watch:['sport']},
   steps:[
     {key:'name', title:'On se présente', sub:'Comment je dois t\'appeler ?', render:nameStep},
     {key:'sex',  title:'Tu es ?', sub:'Pour calculer ton métabolisme correctement.', render:sexStep},
     {key:'body', title:'Ton check-up', sub:'Sois honnête. De toute façon, je vais vérifier. 👀', render:bodyStep},
     {key:'activity', title:'Tu bouges combien ?', sub:'Ton niveau d\'activité au quotidien.', render:activityStep},
-    {key:'goal', title:'Ton objectif', sub:'Qu\'est-ce que tu veux que je t\'aide à faire ?', render:goalStep},
+    {key:'goal', title:'Ton objectif poids', sub:'Côté corps, qu\'est-ce que tu veux que je t\'aide à faire ?', render:goalStep},
+    {key:'watch', title:'Je surveille quoi ?', sub:'Je suis pas qu\'une appli de régime. Choisis tout ce que je dois surveiller dans ta vie. (modifiable après)', render:watchStep},
   ]
 };
 function renderSteps(){
@@ -516,6 +616,22 @@ function goalStep(el){
     `<button class="choice ${OB.data.goal===v?'sel':''}" data-goal="${v}"><span class="emoji">${e}</span><span class="c-txt"><b>${t}</b><small>${s}</small></span></button>`).join('')}</div>`);
   $$('[data-goal]',el).forEach(b=>b.onclick=()=>{OB.data.goal=b.dataset.goal;renderOB();});
 }
+function watchStep(el){
+  const sel=OB.data.watch;
+  el.insertAdjacentHTML('beforeend',`<div class="choices">${PRESETS.map(p=>{
+    const on=sel.includes(p.id);
+    return `<button class="choice ${on?'sel':''}" data-watch="${p.id}">
+      <span class="emoji">${p.emoji}</span>
+      <span class="c-txt"><b>${p.title}</b><small>${p.proof?'preuve photo':p.type==='number'?(p.dir==='max'?'max '+p.target+' '+p.unit:'objectif '+p.target+' '+p.unit):'à cocher chaque jour'}</small></span>
+      <span class="spacer"></span><span style="font-size:1.2rem">${on?'✅':'＋'}</span>
+    </button>`;
+  }).join('')}</div>`);
+  $$('[data-watch]',el).forEach(b=>b.onclick=()=>{
+    const id=b.dataset.watch, i=sel.indexOf(id);
+    if(i>=0) sel.splice(i,1); else sel.push(id);
+    renderOB();
+  });
+}
 function validateOB(){
   const d=OB.data, k=OB.steps[OB.i].key;
   let ok=true;
@@ -524,6 +640,7 @@ function validateOB(){
   if(k==='body') ok=d.age>0 && d.height>0 && d.weight>0;
   if(k==='activity') ok=!!d.activity;
   if(k==='goal') ok=!!d.goal;
+  if(k==='watch') ok=true; // facultatif
   $('#ob-next').disabled=!ok;
 }
 $('#ob-back').onclick=()=>{ if(OB.i>0){OB.i--;renderOB();} };
@@ -533,12 +650,15 @@ $('#ob-next').onclick=()=>{
   else finishOnboarding();
 };
 function finishOnboarding(){
-  S = S || freshState();
-  S.profile = {...OB.data};
+  S = freshState();
+  const {watch, ...prof} = OB.data;
+  S.profile = prof;
+  S.engagements = PRESETS.filter(p=>watch.includes(p.id)).map(p=>({...p}));
   // pesée initiale (déclarée, sans preuve) — marquée comme à confirmer
   S.weighIns = [{date:todayKey(), time:nowTime(), weight:OB.data.weight, photo:null, declared:true}];
   pushFeed('good', `Enchanté ${OB.data.name} 👋 J'ai noté ${OB.data.weight}kg. Mais ça, c'est ce que TU dis. La prochaine pesée, tu me la prouves en photo. 😏`, true);
   pushFeed('info', conscienceDailyPlan());
+  if(S.engagements.length) pushFeed('info', `Je surveille aussi : ${S.engagements.map(e=>e.emoji+' '+e.title.toLowerCase()).join(', ')}. Chaque jour, tu me prouves que t'as tenu. 🔒`);
   save();
   boot();
 }
@@ -560,7 +680,7 @@ function eatenToday(){
   const ms=S.meals[todayKey()]||[];
   return ms.reduce((a,b)=>a+(+b.kcal||0),0);
 }
-// confrontation selon l'heure et le nombre de repas photographiés
+// confrontation selon l'heure : repas non prouvés + engagements non tenus
 function maybeConfront(){
   const k=todayKey();
   const ms=S.meals[k]||[];
@@ -579,6 +699,16 @@ function maybeConfront(){
     S.lastConfront=k+msg.slice(0,12);
     save();
   }
+  // engagements : à partir de 20h, on pointe ce qui n'est pas prouvé
+  if(h>=20){
+    const undone=S.engagements.filter(e=>!isProven(e));
+    if(undone.length && S.lastConfrontEng!==k){
+      const names=undone.map(e=>e.emoji+' '+e.title.toLowerCase()).join(', ');
+      pushFeed('bad', `Il te reste des engagements pas prouvés aujourd'hui : ${names}. Tu les as tenus ou t'as laissé filer ? Prouve-le avant minuit. 👀`, true);
+      S.lastConfrontEng=k;
+      save();
+    }
+  }
 }
 
 /* =========================================================
@@ -595,7 +725,44 @@ function boot(){
   maybeConfront();
   renderAll();
 }
-function renderAll(){ renderToday(); renderMeals(); renderWeight(); renderProfile(); renderStreak(); }
+function renderAll(){ renderScore(); renderMissions(); renderToday(); renderMeals(); renderWeight(); renderProfile(); renderStreak(); }
+
+function renderScore(){
+  const pct=consciencePct();
+  const fg=$('#score-fg'), val=$('#score-val'), lbl=$('#score-lbl');
+  if(pct==null){ val.textContent='—'; fg.style.strokeDashoffset=169.6; lbl.textContent='Ajoute des engagements pour suivre ton indice.'; return; }
+  val.textContent=pct;
+  fg.style.strokeDashoffset = 169.6*(1-pct/100);
+  lbl.textContent = pct>=80 ? 'Carré aujourd\'hui. Continue comme ça. 💪'
+                  : pct>=50 ? 'Pas mal, mais il reste des preuves à donner.'
+                  : 'Faut se reprendre. Prouve-moi tes engagements. 👀';
+}
+function renderMissions(){
+  const list=$('#missions-list');
+  if(!S.engagements.length){
+    list.innerHTML=`<div class="empty"><span class="e">🎯</span>Aucun engagement pour l'instant.<br>Touche « + ajouter » pour que je surveille un domaine de ta vie.</div>`;
+    return;
+  }
+  list.innerHTML = S.engagements.map(e=>{
+    const l=logToday(e.id), prov=isProven(e), succ=isSuccess(e);
+    let state='', cls='';
+    if(prov){
+      if(e.type==='number'){ state=`${l.value} ${e.unit||''} ${succ?'✓':'✗'}`; cls=succ?'ok':'miss'; }
+      else { state='Fait'+(e.proof?' (prouvé)':''); cls='ok'; }
+    } else {
+      state = e.type==='number' ? (e.dir==='max'?'max '+e.target+' '+e.unit:'objectif '+e.target+' '+e.unit)
+            : e.proof ? 'preuve photo requise' : 'à valider';
+    }
+    return `<div class="mission ${cls}" data-eng="${e.id}">
+      <span class="me">${e.emoji}</span>
+      <span class="mt"><b>${e.title}</b><small>${state}</small></span>
+      <button class="act">${prov?'✓':'Prouver'}</button>
+    </div>`;
+  }).join('');
+  $$('.mission',list).forEach(m=>{
+    m.querySelector('.act').onclick=()=>openMission(m.dataset.eng);
+  });
+}
 
 function renderToday(){
   $('#today-date').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
@@ -816,6 +983,75 @@ function reactToWeigh(v,prev){
   pushFeed(type,msg,true);
 }
 
+/* ---- Mission : prouver un engagement ---- */
+function openMission(id){
+  const e=S.engagements.find(x=>x.id===id); if(!e) return;
+  const l=logToday(id)||{};
+  let body='';
+  if(e.type==='number'){
+    const ph = e.dir==='max' ? `ne pas dépasser ${e.target} ${e.unit}` : `objectif ${e.target} ${e.unit}`;
+    body=`<label class="field"><span>Combien ? (${ph})</span><input id="eng-val" type="number" inputmode="decimal" value="${l.value??''}" placeholder="ex: ${e.target}"></label>`;
+  } else {
+    body=`<p class="sub">Confirme que tu l'as fait${e.proof?' — et prouve-le':''}.</p>`;
+  }
+  const proofBlock = e.proof ? captureBlock('eng','Ta preuve en photo'+(e.tip?' — '+e.tip:'')) : '';
+  openModal(`
+    <h3>${e.emoji} ${e.title}</h3>
+    ${proofBlock}
+    ${body}
+    <button class="btn good" id="eng-save">${e.type==='check'?'C\'est fait ✅':'Valider'}</button>
+    <button class="btn ghost" id="eng-cancel">Annuler</button>`);
+  let getPhoto = (l.photo? ()=>l.photo : null);
+  if(e.proof){ wireCapture('eng',(g)=>{ getPhoto=g; }); }
+  $('#eng-cancel').onclick=closeModal;
+  $('#eng-save').onclick=()=>{
+    if(e.proof && !getPhoto){ toast('Photo obligatoire 📸'); return; }
+    const entry={time:nowTime(), done:true};
+    if(e.proof) entry.photo=getPhoto();
+    if(e.type==='number'){ const v=+$('#eng-val').value; if(!(v>=0)){ toast('Mets un chiffre'); return; } entry.value=v; }
+    const k=todayKey(); (S.logs[k]=S.logs[k]||{})[id]=entry;
+    reactToEngagement(e);
+    save(); closeModal(); renderAll(); toast('Engagement enregistré ✅');
+  };
+}
+function reactToEngagement(e){
+  const succ=isSuccess(e), l=logToday(e.id);
+  let type,msg;
+  if(succ){ type='good'; msg=`${e.emoji} ${e.title} : validé, ${pickPraise()}`; }
+  else if(e.type==='number'){
+    type='warn';
+    msg = e.dir==='max'
+      ? `${e.emoji} ${e.title} : ${l.value} ${e.unit}, t'as dépassé ta limite de ${e.target}. Demain tu serres. 👀`
+      : `${e.emoji} ${e.title} : ${l.value} ${e.unit} sur ${e.target} visés. C'est noté, mais c'est pas l'objectif. On peut mieux faire.`;
+  } else { type='good'; msg=`${e.emoji} ${e.title} : bien reçu.`; }
+  pushFeed(type,msg,true);
+}
+function pickPraise(){ const a=['bravo 👏','t\'es carré 💪','je valide 🔥','continue comme ça ✅','respect.']; return a[Math.floor(Math.random()*a.length)]; }
+
+/* ---- Gérer les engagements (ajout / retrait) ---- */
+function openEngManager(){
+  const active=new Set(S.engagements.map(e=>e.id));
+  openModal(`
+    <h3>🎯 Mes engagements</h3>
+    <p class="sub">Choisis ce que je dois surveiller dans ta vie. Je te demanderai des preuves sur chacun.</p>
+    <div class="choices" id="eng-choices">${PRESETS.map(p=>`
+      <button class="choice ${active.has(p.id)?'sel':''}" data-p="${p.id}">
+        <span class="emoji">${p.emoji}</span>
+        <span class="c-txt"><b>${p.title}</b><small>${p.proof?'preuve photo':p.type==='number'?(p.dir==='max'?'max '+p.target+' '+p.unit:'objectif '+p.target+' '+p.unit):'à cocher'}</small></span>
+        <span class="spacer"></span><span style="font-size:1.2rem">${active.has(p.id)?'✅':'＋'}</span>
+      </button>`).join('')}</div>
+    <button class="btn" id="eng-done" style="margin-top:14px">Terminé</button>`);
+  $$('#eng-choices [data-p]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.p;
+    if(active.has(id)){ active.delete(id); S.engagements=S.engagements.filter(e=>e.id!==id); }
+    else { active.add(id); S.engagements.push({...PRESETS.find(p=>p.id===id)}); }
+    save(); openEngManager(); renderAll();
+  });
+  $('#eng-done').onclick=()=>{ closeModal(); renderAll(); };
+}
+$('#missions-add').onclick=openEngManager;
+$('#btn-manage-eng').onclick=openEngManager;
+
 /* ---- Buttons ---- */
 $('#btn-meal').onclick=openMeal;
 $('#btn-meal-2').onclick=openMeal;
@@ -915,10 +1151,13 @@ const AI = {
     return `Tu es "Conscience", la conscience personnelle de ${p.name}. Tu parles en français, au tutoiement, ton direct et un peu cash mais VRAIMENT bienveillant, comme un pote qui veut son bien. Phrases courtes : tu seras lu à voix haute. Pas de longues listes.
 Ta mission : aider ${p.name} à ${goalTxt}. Tu sais qu'il peut te mentir, donc tu réclames toujours des PREUVES en photo (pèse-personne, repas). Pas de preuve = tu confrontes gentiment ("t'as craqué ?").
 Données réelles (ne les invente jamais, utilise-les) :
-- Objectif : ${goalTxt}.
+- Objectif poids : ${goalTxt}.
 - Cible du jour : ${kcal} kcal. Déjà mangé aujourd'hui : ${eaten} kcal sur ${ms.length} repas prouvés.
 - Poids actuel prouvé : ${last? last.weight+' kg':'inconnu'}. Poids de départ : ${first? first.weight+' kg':'?'}.
 - Série de jours actifs : ${($('#streak')||{}).textContent||'0'}.
+- Indice de conscience du jour : ${consciencePct()??'—'}%.
+- Engagements surveillés aujourd'hui : ${S.engagements.length? S.engagements.map(e=>`${e.title} [${isProven(e)?(isSuccess(e)?'tenu ✅':'raté ✗'):'pas encore prouvé'}]`).join(' ; ') : 'aucun'}.
+Tu surveilles TOUTE sa vie, pas que le poids. Confronte sur ce qui n'est pas prouvé.
 Jamais de conseil dangereux pour la santé. Reste motivant et concret. Réponds en 1 à 3 phrases.`;
   },
   async ask(text, onToken){
@@ -1063,9 +1302,69 @@ function setupMic(){
 }
 
 /* =========================================================
+   PWA — installation + service worker (hors-ligne)
+   ========================================================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredInstall=e;
+  const b=$('#btn-install'); if(b) b.style.display='';
+});
+const _bi=$('#btn-install');
+if(_bi) _bi.onclick=async()=>{
+  if(!deferredInstall) { toast('Utilise le menu du navigateur → « Ajouter à l\'écran d\'accueil »'); return; }
+  deferredInstall.prompt();
+  await deferredInstall.userChoice; deferredInstall=null; _bi.style.display='none';
+};
+window.addEventListener('appinstalled', ()=>{ const b=$('#btn-install'); if(b) b.style.display='none'; });
+
+/* =========================================================
+   RAPPELS — notifications locales (best-effort, sans serveur)
+   ========================================================= */
+const _br=$('#btn-reminders');
+function updateRemindersBtn(){ if(_br) _br.textContent = S.reminders ? '🔔 Rappels activés' : '🔕 Activer les rappels'; }
+if(_br) _br.onclick=async()=>{
+  if(!('Notification' in window)){ toast('Notifications non supportées sur cet appareil'); return; }
+  if(S.reminders){ S.reminders=false; save(); updateRemindersBtn(); toast('Rappels coupés'); return; }
+  let perm=Notification.permission;
+  if(perm!=='granted') perm=await Notification.requestPermission();
+  if(perm!=='granted'){ toast('Autorise les notifications pour les rappels'); return; }
+  S.reminders=true; save(); updateRemindersBtn(); toast('Rappels activés 🔔');
+  notify('Conscience', 'C\'est bon, je veille sur toi maintenant. Tu peux plus te cacher. 👁️');
+};
+function notify(title, body){
+  if(!S.reminders || !('Notification' in window) || Notification.permission!=='granted') return;
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,{body,icon:'icon.svg',badge:'icon.svg'})).catch(()=>new Notification(title,{body,icon:'icon.svg'}));
+    } else new Notification(title,{body,icon:'icon.svg'});
+  }catch(e){}
+}
+// Vérifie les rappels toutes les minutes pendant que l'app est ouverte.
+// (Rappels en arrière-plan complet = nécessiterait un serveur push ; ici c'est best-effort.)
+function checkReminders(){
+  if(!S || !S.reminders || !S.engagements) return;
+  const now=new Date(), hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const k=todayKey(); S._fired=S._fired&&S._fired.day===k?S._fired:{day:k,ids:{}};
+  S.engagements.forEach(e=>{
+    if(e.remindAt===hm && !isProven(e) && !S._fired.ids[e.id]){
+      notify(`${e.emoji} ${e.title}`, `T'as tenu ton engagement ? Prouve-le, sinon je note que t'as craqué. 👀`);
+      S._fired.ids[e.id]=1;
+    }
+  });
+  // rappel repas du midi/soir si rien prouvé
+  const ms=(S.meals[k]||[]).length;
+  if(hm==='12:30' && ms===0 && !S._fired.ids.meal12){ notify('🍽️ Ton repas ?', 'Photo de ce que tu manges, maintenant.'); S._fired.ids.meal12=1; }
+  if(hm==='20:00' && ms===0 && !S._fired.ids.meal20){ notify('🍽️ Toujours rien', 'Aucune photo de repas aujourd\'hui. T\'as craqué ?'); S._fired.ids.meal20=1; }
+}
+setInterval(checkReminders, 60000);
+
+/* =========================================================
    START
    ========================================================= */
-if(S && S.profile){ boot(); }
+if(S && S.profile){ updateRemindersBtn(); boot(); }
 else { OB.i=0; renderOB(); }
 </script>
 </body>

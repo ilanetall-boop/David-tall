@@ -1,0 +1,17 @@
+{
+  "name": "Conscience — celle qui te lâche pas",
+  "short_name": "Conscience",
+  "description": "Ta conscience dans la poche. Elle suit ta vie, te fixe tes objectifs et te réclame des preuves. Impossible de lui mentir.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "lang": "fr",
+  "categories": ["health", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
