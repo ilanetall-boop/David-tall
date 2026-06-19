@@ -1,0 +1,17 @@
+{
+  "name": "Mon IA — assistant personnel",
+  "short_name": "Mon IA",
+  "description": "Ton assistant IA personnel, 100% local. Il connaît tes projets, tes tâches et tes notes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0f14",
+  "theme_color": "#0a0f14",
+  "lang": "fr",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
