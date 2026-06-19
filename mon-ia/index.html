@@ -144,6 +144,7 @@ label.field>span{display:block;font-size:.82rem;color:var(--muted);margin-bottom
     <div class="brand"><span class="lo">🧠</span><div><h1>Mon IA</h1><small>ton assistant perso, rien qu'à toi</small></div></div>
     <p class="lead">Je vais devenir <b>ton assistant personnel</b>. Je connaîtrai tes <b>projets</b>, tes <b>tâches</b> et tes <b>notes</b>, et je t'aiderai dans <b>toutes tes activités</b>. Tout reste sur ton appareil — rien ne part sur internet. 🔒</p>
     <label class="field"><span>Ton prénom</span><input id="ob-name" placeholder="ex: David" autocomplete="off"></label>
+    <label class="field"><span>Comment veux-tu m'appeler ?</span><input id="ob-assistant" placeholder="ex: Jarvis" value="Jarvis" autocomplete="off"></label>
     <label class="field"><span>Parle-moi de toi : tes jobs, tes projets, ce que tu fais</span>
       <textarea id="ob-about" rows="5" placeholder="ex: Je suis militaire, je fais du rap (DD de Marseille), je code des apps, je gère une chaîne YouTube..."></textarea></label>
     <div style="flex:1"></div>
@@ -164,6 +165,7 @@ label.field>span{display:block;font-size:.82rem;color:var(--muted);margin-bottom
       <div class="chat-status" id="chat-status"></div>
       <div class="chat-scroll" id="chat-scroll"></div>
       <div class="chat-bar">
+        <button class="icon-btn" id="hf-btn" title="Mode mains-libres">✨</button>
         <button class="icon-btn" id="mic-btn" title="Parler">🎤</button>
         <input id="chat-input" placeholder="Demande-moi un truc..." autocomplete="off" disabled>
         <button class="icon-btn send" id="send-btn" disabled>➤</button>
@@ -224,24 +226,28 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmtDate=ts=>new Date(ts).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
 
 let A=load();
-function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s){s.projects=s.projects||[];s.tasks=s.tasks||[];s.notes=s.notes||[];s.chat=s.chat||[];} return s; }catch(e){ return null; } }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s){s.projects=s.projects||[];s.tasks=s.tasks||[];s.notes=s.notes||[];s.chat=s.chat||[]; if(s.profile&&!s.profile.assistant)s.profile.assistant='Jarvis';} return s; }catch(e){ return null; } }
 function save(){ localStorage.setItem(KEY,JSON.stringify(A)); }
-function fresh(){ return {profile:{name:'',about:''},projects:[],tasks:[],notes:[],chat:[],createdAt:Date.now()}; }
+function fresh(){ return {profile:{name:'',assistant:'Jarvis',about:''},projects:[],tasks:[],notes:[],chat:[],createdAt:Date.now()}; }
 
 /* ---------- Onboarding ---------- */
 $('#ob-go').onclick=()=>{
   const name=$('#ob-name').value.trim();
   if(!name){ $('#ob-name').focus(); return; }
-  A=fresh(); A.profile.name=name; A.profile.about=$('#ob-about').value.trim();
+  A=fresh(); A.profile.name=name;
+  A.profile.assistant=($('#ob-assistant').value.trim()||'Jarvis');
+  A.profile.about=$('#ob-about').value.trim();
   save(); boot();
-  appendBubble('ai',`Salut ${name} 👋 Je suis ton IA perso maintenant. Ajoute tes projets et tes tâches, et demande-moi ce que tu veux : organiser, prioriser, rédiger, réfléchir. On commence par quoi ?`);
+  const an=A.profile.assistant;
+  appendBubble('ai',`À ton service, ${name}. Je suis ${an}, ton assistant perso. Je peux pas juste discuter : je peux AGIR. Dis-moi par exemple « ajoute une tâche : finir le clip », « crée un projet YouTube » ou « note : idée de son », et je le fais. On commence par quoi ?`);
 };
 
 /* ---------- Boot / render ---------- */
 function boot(){
   $('#onboarding').classList.add('hidden');
   $('#main').classList.remove('hidden');
-  $('#hi-name').textContent=`IA de ${A.profile.name}`;
+  $('#hi-name').textContent=A.profile.assistant||'Mon IA';
+  $('#hi-sub').textContent=`assistant de ${A.profile.name}`;
   updateVoiceBtn(); setupMic(); renderChatStatus();
   (A.chat||[]).forEach(m=>appendBubble(m.role,m.text,false));
   renderAll();
@@ -292,7 +298,8 @@ function renderNotes(){
 function renderProfile(){
   const c=$('#profile-card');
   c.innerHTML=`
-    <div class="task"><span class="tx"><small>Prénom</small><b>${esc(A.profile.name)}</b></span></div>
+    <div class="task"><span class="tx"><small>Ton prénom</small><b>${esc(A.profile.name)}</b></span></div>
+    <div class="task"><span class="tx"><small>Nom de ton assistant</small><b>${esc(A.profile.assistant||'Jarvis')}</b></span></div>
     <div class="task" style="border:none"><span class="tx"><small>Ce que je sais de toi</small>${esc(A.profile.about)||'<span class="muted">— rien pour l\'instant —</span>'}</span></div>`;
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -383,7 +390,7 @@ $$('.tabbar button').forEach(b=>b.onclick=()=>{
 /* ---------- Voice ---------- */
 const Voice={ on:JSON.parse(localStorage.getItem('monia.voice')??'true'), voice:null,
   pick(){ if(!('speechSynthesis'in window))return; const vs=speechSynthesis.getVoices(); this.voice=vs.find(v=>/fr[-_]?FR/i.test(v.lang))||vs.find(v=>/^fr/i.test(v.lang))||null; },
-  speak(t){ if(!this.on||!('speechSynthesis'in window)||!t)return; try{ const c=String(t).replace(/<[^>]+>/g,'').replace(/[*_#`]/g,''); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(c); if(this.voice)u.voice=this.voice; u.lang='fr-FR'; u.rate=1.04; speechSynthesis.speak(u); }catch(e){} },
+  speak(t,onEnd){ if(!('speechSynthesis'in window)){ if(onEnd)onEnd(); return; } if(!this.on||!t){ if(onEnd)onEnd(); return; } try{ const c=String(t).replace(/<[^>]+>/g,'').replace(/[*_#`]/g,'').replace(/ACTIONS=\[[\s\S]*$/,''); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(c); if(this.voice)u.voice=this.voice; u.lang='fr-FR'; u.rate=1.04; if(onEnd)u.onend=onEnd; speechSynthesis.speak(u); }catch(e){ if(onEnd)onEnd(); } },
   toggle(){ this.on=!this.on; localStorage.setItem('monia.voice',JSON.stringify(this.on)); if(!this.on&&'speechSynthesis'in window)speechSynthesis.cancel(); updateVoiceBtn(); } };
 if('speechSynthesis'in window){ speechSynthesis.onvoiceschanged=()=>Voice.pick(); Voice.pick(); }
 function updateVoiceBtn(){ const b=$('#voice-btn'); if(!b)return; b.classList.toggle('off',!Voice.on); b.textContent=Voice.on?'🔊':'🔇'; }
@@ -407,7 +414,8 @@ const AI={ engine:null, ready:false, mode:null, model:localStorage.getItem('moni
   },
   system(query){
     const {projLines,taskLines,noteLines}=this.context(query);
-    return `Tu es l'assistant personnel et intelligent de ${A.profile.name}. Tu l'aides dans TOUTES ses activités, jobs et projets. Tu parles français, au tutoiement, ton motivant, concret et efficace. Tu vas droit au but et tu proposes des actions ou des étapes claires.
+    const an=A.profile.assistant||'Jarvis';
+    return `Tu es ${an}, l'assistant personnel intelligent de ${A.profile.name}, dans l'esprit d'un "Jarvis". Tu l'aides dans TOUTES ses activités, jobs et projets. Français, tutoiement, ton posé, loyal, efficace, qui va droit au but.
 CE QUE TU SAIS DE ${A.profile.name.toUpperCase()} :
 ${A.profile.about||'(rien de précis pour le moment)'}
 
@@ -420,7 +428,14 @@ ${taskLines}
 NOTES PERTINENTES :
 ${noteLines}
 
-Utilise ces infos pour répondre de façon personnalisée. Si on te demande d'organiser/prioriser, appuie-toi sur ses vraies tâches et projets. Sois utile, pas bavard.`;
+TU PEUX AGIR, pas seulement parler. Si ${A.profile.name} te demande d'ajouter, créer, noter ou cocher quelque chose : réponds en UNE phrase de confirmation, puis ajoute à la TOUTE FIN une ligne exactement au format :
+ACTIONS=[ ... ]
+où chaque élément est l'un de :
+- {"type":"add_task","text":"...","project":"nom de projet optionnel"}
+- {"type":"add_project","name":"...","desc":"..."}
+- {"type":"add_note","text":"...","project":"nom optionnel"}
+- {"type":"complete_task","text":"texte de la tâche à cocher"}
+N'ajoute la ligne ACTIONS QUE si une action concrète est demandée. Si tu ne fais que conseiller/expliquer, n'écris pas de ligne ACTIONS. Reste utile et bref.`;
   },
   async ask(text,onTok){
     const messages=[{role:'system',content:this.system(text)},...this.history.slice(-6),{role:'user',content:text}];
@@ -438,6 +453,67 @@ function localBrain(text){
   if(/(priorité|prioris|important|d'abord|commenc)/.test(t)) return open.length?`Je commencerais par : « ${open[0].text} ». Une chose à la fois, tu coches, tu passes à la suivante. 💪`:`Rien d'urgent dans tes tâches. Tu peux souffler ou avancer sur un projet de fond.`;
   if(/(merci|thanks)/.test(t)) return `Avec plaisir. Je suis là pour ça. 🙂`;
   return `Je t'ai bien lu. Pour que je sois vraiment utile, ajoute tes projets/tâches/notes — je m'appuie dessus. (Active le gros modèle dans l'onglet IA pour des réponses plus poussées.)`;
+}
+
+/* =========================================================
+   AGENCY — les "mains" : l'IA agit vraiment
+   ========================================================= */
+function findProjectByName(name){
+  if(!name) return null;
+  const n=String(name).toLowerCase().trim();
+  return A.projects.find(p=>p.name.toLowerCase()===n) || A.projects.find(p=>p.name.toLowerCase().includes(n)) || null;
+}
+function execAction(a){
+  if(!a||!a.type) return null;
+  try{
+    if(a.type==='add_task' && a.text){
+      const proj=findProjectByName(a.project);
+      A.tasks.push({id:uid(),text:String(a.text).trim(),projectId:proj?proj.id:null,done:false,createdAt:Date.now()});
+      save(); renderAll(); return `✅ Tâche ajoutée : « ${a.text} »`+(proj?` → ${proj.name}`:'');
+    }
+    if(a.type==='add_project' && a.name){
+      A.projects.push({id:uid(),name:String(a.name).trim(),desc:a.desc||'',emoji:a.emoji||'📌',createdAt:Date.now()});
+      save(); renderAll(); return `📁 Projet créé : « ${a.name} »`;
+    }
+    if(a.type==='add_note' && a.text){
+      const proj=findProjectByName(a.project);
+      A.notes.push({id:uid(),text:String(a.text).trim(),projectId:proj?proj.id:null,createdAt:Date.now()});
+      save(); renderAll(); return `📝 Note enregistrée.`;
+    }
+    if(a.type==='complete_task' && a.text){
+      const q=String(a.text).toLowerCase();
+      const tk=A.tasks.find(x=>!x.done && x.text.toLowerCase().includes(q));
+      if(tk){ tk.done=true; save(); renderAll(); return `✔️ Coché : « ${tk.text} »`; }
+      return `🤔 J'ai pas trouvé de tâche « ${a.text} » à cocher.`;
+    }
+  }catch(e){}
+  return null;
+}
+// Commandes explicites (marchent même sans le gros modèle)
+function parseCommand(text){
+  const t=text.trim(); let m;
+  if(m=t.match(/^(?:ajoute?|cr[ée]+e?|nouvelle?|new)\s+(?:une?\s+)?t[âa]ches?\s*:?\s+(.+)/i)){
+    let body=m[1].trim(), project=null;
+    const pm=body.match(/\s+(?:dans|pour|sur)\s+(?:le\s+|la\s+|mon\s+|le projet\s+)?(?:projet\s+)?(.+)$/i);
+    if(pm){ project=pm[1].trim(); body=body.slice(0,pm.index).trim(); }
+    return {type:'add_task',text:body,project};
+  }
+  if(m=t.match(/^(?:ajoute?|cr[ée]+e?|nouveau|new)\s+(?:un\s+)?projets?\s*:?\s+(.+)/i)) return {type:'add_project',name:m[1].trim()};
+  if(m=t.match(/^(?:note|noter?|prends?\s+note|m[ée]morise)\s*:?\s+(.+)/i)){
+    let body=m[1].trim(), project=null;
+    const pm=body.match(/\s+(?:dans|pour|sur)\s+(?:le\s+)?projet\s+(.+)$/i);
+    if(pm){ project=pm[1].trim(); body=body.slice(0,pm.index).trim(); }
+    return {type:'add_note',text:body,project};
+  }
+  if(m=t.match(/^(?:c'?est\s+)?(?:fait|fini|termin[ée]e?|coche|valide)\s*:?\s+(.+)/i)) return {type:'complete_task',text:m[1].trim()};
+  return null;
+}
+// Extrait une éventuelle ligne ACTIONS=[...] de la réponse du modèle
+function extractActions(text){
+  const m=text.match(/ACTIONS\s*=\s*(\[[\s\S]*\])\s*$/);
+  if(!m) return {clean:text, actions:[]};
+  let actions=[]; try{ actions=JSON.parse(m[1]); }catch(e){ actions=[]; }
+  return {clean:text.slice(0,m.index).trim(), actions:Array.isArray(actions)?actions:[]};
 }
 
 /* ---------- Chat UI ---------- */
@@ -469,7 +545,7 @@ async function activateAI(){
     appendBubble('ai',m); Voice.speak(m);
   }
 }
-function setChatEnabled(on){ $('#chat-input').disabled=!on; $('#send-btn').disabled=!on; $('#mic-btn').disabled=!on; }
+function setChatEnabled(on){ $('#chat-input').disabled=!on; $('#send-btn').disabled=!on; /* micro & mains-libres restent toujours dispo (mode local) */ }
 function appendBubble(role,text,persist=true){
   const d=document.createElement('div'); d.className='cmsg '+(role==='me'?'me':'ai'); d.textContent=text;
   $('#chat-scroll').appendChild(d); scrollChat();
@@ -477,25 +553,63 @@ function appendBubble(role,text,persist=true){
   return d;
 }
 function scrollChat(){ const s=$('#chat-scroll'); if(s)s.scrollTop=s.scrollHeight; }
+function persistAI(text){ (A.chat=A.chat||[]).push({role:'ai',text}); if(A.chat.length>80)A.chat=A.chat.slice(-80); save(); }
+
 async function sendChat(){
   const inp=$('#chat-input'), text=(inp.value||'').trim(); if(!text)return; inp.value=''; appendBubble('me',text);
+
+  // 1) Commande explicite -> on agit direct (fiable, même sans gros modèle)
+  const cmd=parseCommand(text);
+  if(cmd){
+    const res=execAction(cmd) || `Je n'ai pas pu faire ça.`;
+    appendBubble('ai',res); Voice.speak(res, handsFree?startListen:null);
+    return;
+  }
+
+  // 2) Sinon : le modèle répond (et peut agir via ACTIONS=[...])
   if(AI.ready){
     setChatEnabled(false); const node=appendBubble('ai','',false); node.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
-    try{ const full=await AI.ask(text,p=>{node.textContent=p;scrollChat();}); node.textContent=full||'...';
-      (A.chat=A.chat||[]).push({role:'ai',text:node.textContent}); if(A.chat.length>80)A.chat=A.chat.slice(-80); save(); Voice.speak(node.textContent);
-    }catch(e){ node.textContent='Bug pendant que je réfléchissais 😵. Réessaie.'; }
-    setChatEnabled(true); inp.focus();
-  } else { const r=localBrain(text); appendBubble('ai',r); Voice.speak(r); }
+    try{
+      const full=await AI.ask(text,p=>{ node.textContent=p.replace(/ACTIONS=\[[\s\S]*$/,''); scrollChat(); });
+      const {clean,actions}=extractActions(full||'');
+      node.textContent=clean||'...'; persistAI(node.textContent);
+      const done=actions.map(execAction).filter(Boolean);
+      if(done.length){ const c=appendBubble('ai',done.join('\n')); }
+      Voice.speak(node.textContent, handsFree?startListen:null);
+    }catch(e){ node.textContent='Bug pendant que je réfléchissais 😵. Réessaie.'; if(handsFree)startListen(); }
+    setChatEnabled(true); if(!handsFree) inp.focus();
+  } else {
+    const r=localBrain(text); appendBubble('ai',r); Voice.speak(r, handsFree?startListen:null);
+  }
 }
 $('#send-btn').onclick=sendChat;
 $('#chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter')sendChat(); });
+
+/* ---------- Micro + mode mains-libres ("Jarvis") ---------- */
+let handsFree=false, listening=false;
 function setupMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition, btn=$('#mic-btn');
-  if(!SR||!btn){ if(btn)btn.style.display='none'; return; } if(recog)return;
-  recog=new SR(); recog.lang='fr-FR'; recog.interimResults=false;
-  recog.onresult=e=>{ $('#chat-input').value=e.results[0][0].transcript; sendChat(); };
-  recog.onend=()=>btn.classList.remove('rec'); recog.onerror=()=>btn.classList.remove('rec');
-  btn.onclick=()=>{ try{ if('speechSynthesis'in window)speechSynthesis.cancel(); btn.classList.add('rec'); recog.start(); }catch(e){ btn.classList.remove('rec'); } };
+  if(!SR){ if(btn)btn.style.display='none'; const hf=$('#hf-btn'); if(hf)hf.style.display='none'; return; }
+  if(!recog){
+    recog=new SR(); recog.lang='fr-FR'; recog.interimResults=false;
+    recog.onresult=e=>{ const tx=e.results[0][0].transcript; $('#chat-input').value=tx; sendChat(); };
+    recog.onend=()=>{ listening=false; btn.classList.remove('rec'); };
+    recog.onerror=()=>{ listening=false; btn.classList.remove('rec'); };
+  }
+  btn.onclick=()=>startListen();
+  $('#hf-btn').onclick=toggleHandsFree;
+}
+function startListen(){
+  if(!recog || listening) return;
+  try{ if('speechSynthesis'in window)speechSynthesis.cancel(); listening=true; $('#mic-btn').classList.add('rec'); recog.start(); }
+  catch(e){ listening=false; }
+}
+function toggleHandsFree(){
+  if(!recog){ toast('Micro non dispo sur cet appareil'); return; }
+  handsFree=!handsFree;
+  const hf=$('#hf-btn'); hf.classList.toggle('rec',handsFree);
+  if(handsFree){ const m=`Mode mains-libres activé. Je t'écoute, ${A.profile.name}.`; appendBubble('ai',m); Voice.speak(m, startListen); }
+  else { try{recog.stop();}catch(e){} toast('Mode mains-libres coupé'); }
 }
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2000); }
 
