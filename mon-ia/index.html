@@ -199,7 +199,12 @@ label.field>span{display:block;font-size:.82rem;color:var(--muted);margin-bottom
     <section id="v-profile" class="view">
       <div class="section-h"><h2>⚙️ Profil</h2></div>
       <div class="card" id="profile-card"></div>
+      <div class="card" id="memory-card">
+        <div class="section-h" style="margin:0 0 10px"><h2 style="font-size:1.05rem">🧠 Sa mémoire</h2></div>
+        <div id="memory-list"></div>
+      </div>
       <button class="btn secondary" id="btn-edit-about" style="margin-bottom:12px">✏️ Modifier ce que je sais de toi</button>
+      <button class="btn secondary" id="btn-edit-persona" style="margin-bottom:12px">🎭 Régler sa personnalité</button>
       <button class="btn secondary" id="btn-install" style="margin-bottom:12px;display:none">📲 Installer l'app</button>
       <button class="btn ghost danger" id="btn-reset">Tout effacer</button>
       <p class="disclaimer">100% local. Le modèle IA tourne sur ton appareil (WebLLM/WebGPU), rien n'est envoyé sur internet.</p>
@@ -226,9 +231,9 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmtDate=ts=>new Date(ts).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
 
 let A=load();
-function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s){s.projects=s.projects||[];s.tasks=s.tasks||[];s.notes=s.notes||[];s.chat=s.chat||[]; if(s.profile&&!s.profile.assistant)s.profile.assistant='Jarvis';} return s; }catch(e){ return null; } }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s){s.projects=s.projects||[];s.tasks=s.tasks||[];s.notes=s.notes||[];s.chat=s.chat||[];s.memory=s.memory||[]; if(s.profile){ if(!s.profile.assistant)s.profile.assistant='Jarvis'; if(s.profile.persona==null)s.profile.persona=''; }} return s; }catch(e){ return null; } }
 function save(){ localStorage.setItem(KEY,JSON.stringify(A)); }
-function fresh(){ return {profile:{name:'',assistant:'Jarvis',about:''},projects:[],tasks:[],notes:[],chat:[],createdAt:Date.now()}; }
+function fresh(){ return {profile:{name:'',assistant:'Jarvis',about:'',persona:''},projects:[],tasks:[],notes:[],memory:[],chat:[],createdAt:Date.now()}; }
 
 /* ---------- Onboarding ---------- */
 $('#ob-go').onclick=()=>{
@@ -252,7 +257,15 @@ function boot(){
   (A.chat||[]).forEach(m=>appendBubble(m.role,m.text,false));
   renderAll();
 }
-function renderAll(){ renderTasks(); renderProjects(); renderNotes(); renderProfile(); }
+function renderAll(){ renderTasks(); renderProjects(); renderNotes(); renderProfile(); renderMemory(); }
+
+function renderMemory(){
+  const el=$('#memory-list'); if(!el) return;
+  if(!A.memory||!A.memory.length){ el.innerHTML=`<p class="muted" style="font-size:.9rem">Vide pour l'instant. Dis-lui « retiens que… » et ça s'affichera ici.</p>`; return; }
+  el.innerHTML=[...A.memory].reverse().map(m=>`
+    <div class="task" data-id="${m.id}"><span class="tx" style="font-size:.92rem">🧠 ${esc(m.text)}</span><button class="del" data-del="${m.id}">🗑️</button></div>`).join('');
+  $$('[data-del]',el).forEach(b=>b.onclick=()=>{ A.memory=A.memory.filter(x=>x.id!==b.dataset.del); save(); renderMemory(); });
+}
 
 const projById=id=>A.projects.find(p=>p.id===id);
 const projName=id=>{const p=projById(id);return p?p.name:'';};
@@ -373,6 +386,19 @@ $('#btn-edit-about').onclick=()=>{
     <button class="btn" id="a-save">Enregistrer</button>`);
   $('#a-save').onclick=()=>{ A.profile.about=$('#a-about').value.trim(); save(); closeModal(); renderProfile(); toast('Mis à jour ✏️'); };
 };
+$('#btn-edit-persona').onclick=()=>{
+  const an=esc(A.profile.assistant||'Jarvis');
+  openModal(`<h3>🎭 Personnalité de ${an}</h3>
+    <p class="muted" style="margin-bottom:12px;font-size:.9rem">Décris comment il doit être et parler. Il appliquera ça à chaque réponse.</p>
+    <label class="field"><span>Son nom</span><input id="p-assist" value="${esc(A.profile.assistant||'Jarvis')}"></label>
+    <label class="field"><span>Son caractère / sa façon de parler</span><textarea id="p-persona" rows="5" placeholder="ex: cash et marrant comme un pote marseillais, motive-moi, parle-moi rap, va droit au but, pas de blabla...">${esc(A.profile.persona||'')}</textarea></label>
+    <button class="btn" id="p-save">Enregistrer</button>`);
+  $('#p-save').onclick=()=>{
+    A.profile.assistant=($('#p-assist').value.trim()||'Jarvis');
+    A.profile.persona=$('#p-persona').value.trim();
+    save(); closeModal(); $('#hi-name').textContent=A.profile.assistant; renderProfile(); toast('Personnalité mise à jour 🎭');
+  };
+};
 $('#btn-reset').onclick=()=>{
   openModal(`<h3>Tout effacer ?</h3><p class="muted" style="margin-bottom:16px">Profil, projets, tâches, notes et conversations. Irréversible.</p>
     <button class="btn danger" id="r-yes">Oui, effacer</button><button class="btn ghost" id="r-no" style="margin-top:8px">Annuler</button>`);
@@ -415,9 +441,11 @@ const AI={ engine:null, ready:false, mode:null, model:localStorage.getItem('moni
   system(query){
     const {projLines,taskLines,noteLines}=this.context(query);
     const an=A.profile.assistant||'Jarvis';
-    return `Tu es ${an}, l'assistant personnel intelligent de ${A.profile.name}, dans l'esprit d'un "Jarvis". Tu l'aides dans TOUTES ses activités, jobs et projets. Français, tutoiement, ton posé, loyal, efficace, qui va droit au but.
+    const persona=A.profile.persona ? `\nTA PERSONNALITÉ (à respecter absolument) : ${A.profile.persona}` : '';
+    const mem=A.memory&&A.memory.length ? `\n\nCE QUE TU DOIS TOUJOURS TE RAPPELER (mémoire long terme) :\n${A.memory.map(m=>'- '+m.text).join('\n')}` : '';
+    return `Tu es ${an}, l'assistant personnel intelligent de ${A.profile.name}, dans l'esprit d'un "Jarvis". Tu l'aides dans TOUTES ses activités, jobs et projets. Français, tutoiement, ton posé, loyal, efficace, qui va droit au but.${persona}
 CE QUE TU SAIS DE ${A.profile.name.toUpperCase()} :
-${A.profile.about||'(rien de précis pour le moment)'}
+${A.profile.about||'(rien de précis pour le moment)'}${mem}
 
 SES PROJETS :
 ${projLines}
@@ -435,6 +463,7 @@ où chaque élément est l'un de :
 - {"type":"add_project","name":"...","desc":"..."}
 - {"type":"add_note","text":"...","project":"nom optionnel"}
 - {"type":"complete_task","text":"texte de la tâche à cocher"}
+- {"type":"remember","text":"fait important à retenir pour toujours sur ${A.profile.name}"}
 N'ajoute la ligne ACTIONS QUE si une action concrète est demandée. Si tu ne fais que conseiller/expliquer, n'écris pas de ligne ACTIONS. Reste utile et bref.`;
   },
   async ask(text,onTok){
@@ -486,6 +515,10 @@ function execAction(a){
       if(tk){ tk.done=true; save(); renderAll(); return `✔️ Coché : « ${tk.text} »`; }
       return `🤔 J'ai pas trouvé de tâche « ${a.text} » à cocher.`;
     }
+    if(a.type==='remember' && a.text){
+      A.memory=A.memory||[]; A.memory.push({id:uid(),text:String(a.text).trim(),createdAt:Date.now()});
+      save(); renderAll(); return `🧠 C'est gravé : « ${a.text} ». Je m'en souviendrai.`;
+    }
   }catch(e){}
   return null;
 }
@@ -506,6 +539,7 @@ function parseCommand(text){
     return {type:'add_note',text:body,project};
   }
   if(m=t.match(/^(?:c'?est\s+)?(?:fait|fini|termin[ée]e?|coche|valide)\s*:?\s+(.+)/i)) return {type:'complete_task',text:m[1].trim()};
+  if(m=t.match(/^(?:retiens|souviens[- ]toi|rappelle[- ]toi|m[ée]morise)\s+(?:que\s+|de\s+)?(.+)/i)) return {type:'remember',text:m[1].trim()};
   return null;
 }
 // Extrait une éventuelle ligne ACTIONS=[...] de la réponse du modèle
